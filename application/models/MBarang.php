@@ -3,10 +3,10 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 
 class MBarang extends CI_Model
 {
-    private $barang = 'barang';
-    private $v_barang = 'v_barang';   
+    private $barang = 'inv_barang';
+    private $v_barang = 'v_barang'; 
 
-    public function show_barang($where='')
+    public function show($where='')
     {
         $this->db->select('*');
         $this->db->from($this->v_barang);
@@ -18,24 +18,25 @@ class MBarang extends CI_Model
         return $this->db->get();
     }  
 
-    public function insert_barang($object)
+    public function insert($object)
     {
-        $this->db->insert_barang($this->barang, $object);
+        $this->db->insert($this->barang, $object);
         return(($this->db->affected_rows() > 0) ? true : false);
     }
 
-    public function update_barang($where, $object)
+    public function update($where, $object)
     {
         $this->db->where($where);
-        $this->db->update_barang($this->barang, $object);
+        $this->db->update($this->barang, $object);
         return(($this->db->affected_rows() > 0) ? true : false);
     }   
 
-    public function delete_barang($where)
+    public function delete($where)
     {
         $this->db->where($where);
-        $this->db->delete_barang($this->inv_barang);
-        return(($this->tbl->affected_rows() > 0) ? true : false);
+        $this->db->delete($this->barang);
+        return(($this->db->affected_rows() > 0) ? true : false);
     }
+
 }
 ?>

@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 
 class MKategoriProses extends CI_Model
 {
-    private $tbl = 'kategori_proses';
+    private $tbl = 'inv_kategori_proses';
 
     public function show($where='')
     {

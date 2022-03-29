@@ -1,5 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+require(APPPATH.'libraries/restserver/src/RestController.php');
+require(APPPATH.'libraries/restserver/src/Format.php');
 use chriskacerguis\RestServer\RestController;
 
 class SatuanBarang extends RestController {
@@ -11,59 +13,77 @@ class SatuanBarang extends RestController {
 
     public function __construct(){
         parent::__construct();
+
+        if (!$this->_key_exists($this->input->request_headers()['token'])) {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Invalid API key'
+            ], RestCOntroller::HTTP_BAD_REQUEST);
+        }else {
+            $this->key = $this->input->request_headers()['token'];
+        }
+
         $this->load->model('MSatuanBarang', 'satuan_barang');
+        $this->load->model('MToken', 'token');
     }
 
-    public function index_post($id_sataun='')
+    private function _checkToken()
+    {
+        try {
+            $payload = JWT::decode($this->tokenkey, $this->key, array('HS256'));
+            $time = new DateTimeImmutable();
+
+            if ($time->getTimestamp() > $payload->exp) {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'API Key Expired'
+                ], RestController::HTTP_BAD_REQUEST);
+            }
+        } catch (Exception $e) {
+            $this->response([
+                'status' => FALSE,
+                'message' => $e->getMessage()
+            ], RestController::HTTP_BAD_REQUEST);
+        }
+    }
+
+    private function _key_exists($key)
+    {
+    return $this->rest->db
+    ->where(config_item('rest_key_column'), $key)
+    ->count_all_results(config_item('rest_keys_table')) > 0;
+    }
+
+    public function index_post($slug='')
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if(!$id_satuan){
-            $this->form_validation->set_rules('id_satuan', 'ID Satuan', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('satuan_barang', 'Satuan Barang', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('create_at', 'Create At', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('update_at', 'Update At', 'trim|required', [
+        if(!$slug){
+            $this->form_validation->set_rules('satuan', 'Satuan Barang', 'trim|required', [
                 'required' => '%s Required'
             ]);
         }
 
-        if($this->form_validation->run() == FALSE && !$id_satuan){
+        if($this->form_validation->run() == FALSE && !$slug){
             $this->response([
                 'status' => FALSE,
-                'title' => 'Invalid input reuired',
+                'title' => 'Invalid input reuqired',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else{
-            if(@$id_status){
-                if(@$id_satuan && @$jsonArray['satuan_barang']){
-                    $arr['satuan_barang'] = $jsonArray['satuan_barang'];
-                }
-                if(@$id_satuan && @$jsonArray['create_at']){
-                    $arr['create_at'] = $jsonArray['create_at'];
-                }
-                if(@$id_satuan && @$jsonArray['update_at']){
-                    $arr['update_at'] = $jsonArray['update_at'];
+            if(@$slug){
+                if(@$slug && @$jsonArray['satuan']){
+                    $arr['satuan_barang'] = $jsonArray['satuan'];
                 }
             }else{
                 $arr = [
-                    'satuan_barang' => $jsonArray['satuan_barang'],
-                    'create_at' => $jsonArray['create_at'],
-                    'update_at' => $jsonArray['update_at']
+                    'slug' => str_replace(' ', '-', strtolower($jsonArray ['satuan'])),
+                    'satuan_barang' => $jsonArray['satuan']
                 ];
             }
-            if(!$id_satuan){
-                $arr['id_satuan'] = $jsonArray['id_satuan'];
-                $arr['created_at'] = date('Y-m-d H:i:s');
+            if(!$slug){
+                $arr['create_at'] = date('Y-m-d H:i:s');
 
                 $ins = $this->satuan_barang->insert($arr);
                 if($ins){
@@ -80,17 +100,21 @@ class SatuanBarang extends RestController {
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else{
-                $id_satuan = ['id_satuan' => $id_satuan];
+                $idslug = ['slug' => $slug];
+                $row = $this->satuan_barang->show($idslug)->row_array();
+                $id = ['id_satuan' => $row ['id_satuan']];
+
+                $arr['slug'] = str_replace(' ', '-', strtolower($jsonArray ['satuan']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->satuan_barang->update($id_satuan, $arr);
+                $upd = $this->satuan_barang->update($id, $arr);
+
+                // $this->satuan_barang->update_batch('satuan_barang', $arr, 'id_satuan');
+
                 if($upd){
-                    $check = array(
-                        'id_satuan' => $id_satuan
-                    );
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
-                        'message' => 'Satuan Barang ID : '.$id_satuan['id_satuan'],'was successful update!'
+                        'message' => 'Satuan Barang : '.$jsonArray['satuan'].' was successful update!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -110,7 +134,7 @@ class SatuanBarang extends RestController {
 
             $data = $get->row();
         }else{
-            $get = $this->status_barang->show();
+            $get = $this->satuan_barang->show();
             $data = $get->result();
         }
         if($get->num_rows() > 0){
@@ -128,19 +152,21 @@ class SatuanBarang extends RestController {
         }
     }
 
-    public function index_delete($id_status)
+    public function index_delete($slug)
     {
-        if(@$id_satuan){
-            $id_satuan = ['id_satuan' => $id_satuan];
-            $get = $this->satuan_barang->show($id_satuan);
-            $data = $get->row();
+        if(@$slug){
+            $idslug = ['slug' => $slug];
+            $get = $this->satuan_barang->show($idslug);
+        
             if($get->num_rows() == 1){
-                $del = $this->satuan_barang->delete($id_satuan);
+                $data = $get->row_array();
+                $id = ['id_satuan' => $data['id_satuan']];
+                $del = $this->satuan_barang->delete($id);
                 if($del){
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Success delete one Satuan Barang',
-                        'message' => 'Satuan Barang : '.$id_satuan['id_satuan'].'was deleted!'
+                        'message' => 'Satuan Barang : '.$data['satuan_barang'].' was deleted!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([

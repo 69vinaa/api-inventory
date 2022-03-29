@@ -1,5 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+require(APPPATH.'libraries/restserver/src/RestController.php');
+require(APPPATH.'libraries/restserver/src/Format.php');
 use chriskacerguis\RestServer\RestController;
 
 class TypeBarang extends RestController {
@@ -11,59 +13,77 @@ class TypeBarang extends RestController {
 
     public function __construct(){
         parent::__construct();
+
+        if (!$this->_key_exists($this->input->request_headers()['token'])) {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Invalid API Key'
+            ], RestController::HTTP_BAD_REQUEST);
+        }else {
+            $this->key = $this->input->request_headers()['token'];
+        }
+
         $this->load->model('MTypeBarang', 'type_barang');
+        $this->load->model('MToken', 'token');
     }
 
-    public function index_post($id_type='')
+    private function _checkToken()
+    {
+        try {
+            $payload = JWT::decode($this->tokenkey, $this->key, array('HS256'));
+            $time = new DateTimeImmutable();
+
+            if ($time->getTimestamp() > $payload->exp) {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'API Key Expired'
+                ], RestController::HTTP_BAD_REQUEST);
+            }
+        } catch (Exception $e) {
+            $this->response([
+                'status' => FALSE,
+                'message' => $e->getMessage()
+            ], RestController::HTTP_BAD_REQUEST);
+        }
+    }
+
+    private function _key_exists($key)
+    {
+        return $this->rest->db
+        ->where(config_item('rest_key_column'), $key)
+        ->count_all_results(config_item('rest_keys_table')) > 0;
+    }
+
+    public function index_post($slug='')
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if(!$id_type){
-            $this->form_validation->set_rules('id_type', 'ID Type', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('type_barang', 'Type Barang', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('create_at', 'Create At', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('update_at', 'Update At', 'trim|required', [
+        if(!$slug){
+            $this->form_validation->set_rules('type', 'Type Barang', 'trim|required', [
                 'required' => '%s Required'
             ]);
         }
 
-        if($this->form_validation->run() == FALSE && !$id_type){
+        if($this->form_validation->run() == FALSE && !$slug){
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input reuired',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else{
-            if(@$id_type){
-                if(@$id_type && @$jsonArray['type_barang']){
-                    $arr['type_barang'] = $jsonArray['type_barang'];
-                }
-                if(@$id_type && @$jsonArray['create_at']){
-                    $arr['create_at'] = $jsonArray['create_at'];
-                }
-                if(@$id_type && @$jsonArray['update_at']){
-                    $arr['update_at'] = $jsonArray['update_at'];
+            if(@$slug){
+                if(@$slug && @$jsonArray['type']){
+                    $arr['type_barang'] = $jsonArray['type'];
                 }
             }else{
                 $arr = [
-                    'type_barang' => $jsonArray['type_barang'],
-                    'create_at' => $jsonArray['create_at'],
-                    'update_at' => $jsonArray['update_at']
+                    'slug' => str_replace(' ', '-', strtolower($jsonArray ['type'])),
+                    'type_barang' => $jsonArray['type']
                 ];
             }
-            if(!$id_type){
-                $arr['id_type'] = $jsonArray['id_type'];
-                $arr['created_at'] = date('Y-m-d H:i:s');
+            if(!$slug){
+                $arr['create_at'] = date('Y-m-d H:i:s');
 
                 $ins = $this->type_barang->insert($arr);
                 if($ins){
@@ -80,17 +100,18 @@ class TypeBarang extends RestController {
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else{
-                $id_type = ['id_type' => $id_type];
+                $idslug = ['slug' => $slug];
+                $row = $this->type_barang->show($idslug)->row_array();
+                $id = ['id_type' => $row['id_type']];
+                
+                $arr['slug'] = str_replace(' ', '-', strtolower($jsonArray ['type']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->type_barang->update($id_type, $arr);
+                $upd = $this->type_barang->update($id, $arr);
                 if($upd){
-                    $check = array(
-                        'id_type' => $id_type
-                    );
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
-                        'message' => 'Type Barang ID : '.$id_type['id_type'],'was successful update!'
+                        'message' => 'Type Barang ID : '.$jsonArray['type'].' was successful update!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -128,19 +149,21 @@ class TypeBarang extends RestController {
         }
     }
 
-    public function index_delete($id_jenis)
+    public function index_delete($slug)
     {
-        if(@$id_type){
-            $id_type = ['id_type' => $id_type];
-            $get = $this->type_barang->show($id_type);
-            $data = $get->row();
+        if(@$slug){
+            $idslug = ['slug' => $slug];
+            $get = $this->type_barang->show($idslug);
+
             if($get->num_rows() == 1){
-                $del = $this->type_barang->delete($id_type);
+                $data = $get->row_array();
+                $id = ['id_type' => $data['id_type']];
+                $del = $this->type_barang->delete($id);
                 if($del){
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Success delete one Type Barang',
-                        'message' => 'Type Barang : '.$id_type['id_type'].'was deleted!'
+                        'message' => 'Type Barang : '.$data['type_barang'].' was deleted!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([

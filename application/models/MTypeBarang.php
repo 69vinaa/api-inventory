@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 
 class MTypeBarang extends CI_Model
 {
-    private $tbl = 'type_barang';
+    private $tbl = 'inv_type_barang';
 
     public function show($where='')
     {

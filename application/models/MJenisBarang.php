@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 
 class MJenisBarang extends CI_Model
 {
-    private $tbl = 'jenis_barang';
+    private $tbl = 'inv_jenis_barang';
 
     public function show($where='')
     {

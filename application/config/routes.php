@@ -56,11 +56,17 @@ $route['translate_uri_dashes'] = FALSE;
 $route['inv_barang']='Barang/index';
 $route['inv_barang/(:any)']='Barang/index/$1';
 
+$route['inv_barang_proses']='BarangProses/index';
+$route['inv_barang_proses/(:any)']='BarangProses/index/$1';
+
 $route['inv_jenis_barang']='JenisBarang/index';
 $route['inv_jenis_barang/(:any)']='JenisBarang/index/$1';
 
 $route['inv_kategori_proses']='KategoriProses/index';
 $route['inv_kategori_proses/(:any)']='KategoriProses/index/$1';
+
+$route['inv_satuan_barang']='SatuanBarang/index';
+$route['inv_satuan_barang/(:any)']='SatuanBarang/index/$1';
 
 $route['inv_status_barang']='StatusBarang/index';
 $route['inv_status_barang/(:any)']='StatusBarang/index/$1';

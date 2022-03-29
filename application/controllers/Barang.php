@@ -1,5 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+require(APPPATH.'libraries/restserver/src/RestController.php');
+require(APPPATH.'libraries/restserver/src/Format.php');
 use chriskacerguis\RestServer\RestController;
 
 class Barang extends RestController {
@@ -16,15 +18,14 @@ class Barang extends RestController {
     public function __construct(){
         parent::__construct();
 
-        if (!$this->_key_exists($this->input->nsapi_request_headers()['token'])) {
+        if (!$this->_key_exists($this->input->request_headers()['token'])) {
             $this->response([
                 'status' => FALSE,
                 'message' => 'Invalid API key'
             ], RestController::HTTP_BAD_REQUEST);
         }else{
             $this->key = $this->input->request_headers()['token'];
-            $this->tokenkey = $this->input->request_headers()['tokenkey'];
-            $this->_checkToken();
+            // $this->_checkToken();
         }
 
         $this->load->model('MBarang', 'barang');
@@ -38,7 +39,7 @@ class Barang extends RestController {
             $payload = JWT::decode($this->tokenkey, $this->key, array('HS256'));
             $time = new DateTimeImmutable();
 
-            if ($time->getTImestamp() > $payload->exp) {
+            if ($time->getTimestamp() > $payload->exp) {
                 $this->response([
                     'status' => FALSE,
                     'message' => 'API Key Expired'
@@ -54,7 +55,7 @@ class Barang extends RestController {
 
     public function _generate_token($payload)
     {
-        $issuedAt = new DateTImeImmutable();
+        $issuedAt = new DateTimeImmutable();
         $expire = $issuedAt->modify('+1 month')->getTimestamp();
         $forToken = [
             'iat' => $issuedAt->getTimestamp(),
@@ -110,87 +111,128 @@ class Barang extends RestController {
         }
     }
 
-    public function index_post_barang($id_barang='')
+    private function _generate_key()
+    {
+        do {
+            $salt = base_convert(bin2hex($this->security->get_random_bytes(64)), 16, 36);
+
+            if ($salt === FALSE) {
+                $salt = hash('sha256', time() . mt_rand());
+            }
+
+            $new_key = substr($salt, 0, config_ite,('rest_key_length'));
+        } while ($this->_key_exists($new_key));
+
+        return $new_key;
+    }
+
+    private function _get_key($key)
+    {
+        return $this->rest->db
+        ->where(config_item('rest_key_column'), $key)
+        ->get(config_item('rest_keys_table'))
+        ->row();
+    }
+
+    private function _key_exists($key)
+    {
+    return $this->rest->db
+    ->where(config_item('rest_key_column'), $key)
+    ->count_all_results(config_item('rest_keys_table')) > 0;
+    }
+
+    private function _insert_key($key, $data)
+    {
+        $data[config_item('rest_key_column')] = $key;
+        $data['create_at'] = date('Y-m-d H:i:s');
+
+        return $this->rest->db
+        ->set($data)
+        ->insert(config_item('rest_key_table'));
+    }
+
+    private function _update_key($key, $data)
+    {
+        return $this->rest_db
+        ->where(config_item('rest_key_column'), $key)
+        ->update(config_item('rest_keys_table'), $data);
+    }
+
+    private function _delete_key($key)
+    {
+        return $this->rest->db
+        ->where(config_item('rest_key_column'), $key)
+        ->delete(config_item('rest_keys_table'));
+    }
+
+    public function index_post($slug='')
     {
         $jsonArray = json_decode ($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if(!$id_barang){
-            $this->form_validation->set_rules('id_barang', 'ID Barang', 'trim|required', [
+        if(!$slug){
+            $this->form_validation->set_rules('kode', 'Kode Barang', 'trim|required', [
                 'required' => '%s Required'
             ]);
-            $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
+            $this->form_validation->set_rules('nama', 'Nama Barang', 'trim|required', [
                 'required' => '%s Required'
             ]);
-            $this->form_validation->set_rules('kode_barang', 'Kode Barang', 'trim|required', [
+            $this->form_validation->set_rules('jenis', 'ID Jenis', 'trim|required', [
                 'required' => '%s Required'
             ]);
-            $this->form_validation->set_rules('nama_barang', 'Nama Barang', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('id_jenis', 'ID Jenis', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('id_satuan', 'ID Satuan', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('overall_stok', 'Overall Stok', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('create_at', 'Create At', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('update_at', 'Update At', 'trim|required', [
+            $this->form_validation->set_rules('satuan', 'ID Satuan', 'trim|required', [
                 'required' => '%s Required'
             ]);
         }
 
-        if($this->form_validation->run() == FALSE && !$id_barang){
+        if($this->form_validation->run() == FALSE && !$slug){
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input required',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else{
-            if(@$id_barang){
-                if(@$id_barang && @$jsonArray ['kode_barang']){
-                    $arr['kode_barang'] = $josnArray ['kode_barang'];
+            if(@$slug){ //untuk update
+                if(@$slug && @$jsonArray ['kode']){
+                    $arr['kode_barang'] = $jsonArray ['kode'];
                 }
-                if(@$id_barang && @$jsonArray ['nama_barang']){
-                    $arr['nama_barang'] = $josnArray ['nama_barang'];
+                if(@$slug && @$jsonArray ['nama']){
+                    $arr['nama_barang'] = $jsonArray ['nama'];
                 }
-                if(@$id_barang && @$jsonArray ['id_jenis']){
-                    $arr['id_jenis'] = $josnArray ['id_jenis'];
+                if(@$slug && @$jsonArray ['jenis']){
+                    $arr['id_jenis'] = $jsonArray ['jenis'];
                 }
-                if(@$id_barang && @$jsonArray ['id_satuan']){
-                    $arr['id_satuan'] = $josnArray ['id_satuan'];
+                if(@$slug && @$jsonArray ['satuan']){
+                    $arr['id_satuan'] = $jsonArray ['satuan'];
                 }
-                if(@$id_barang && @$jsonArray ['overall_stok']){
-                    $arr['overall_stok'] = $josnArray ['overall_stok'];
-                }
-                if(@$id_barang && @$jsonArray ['create_at']){
-                    $arr['create_at'] = $josnArray ['create_at'];
-                }
-                if(@$id_barang && @$jsonArray ['update_at']){
-                    $arr['update_at'] = $josnArray ['update_at'];
-                }
-            }else{
+            }else{ //untuk insert
                 $arr = [
-                    'kode_barang' => $jsonArray ['kode_barang'],
-                    'nama_barang' => $jsonArray ['nama_barang'],
-                    'id_jenis' => $jsonArray ['id_jenis'],
-                    'id_satuan' => $jsonArray ['id_satuan'],
-                    'overall_stok' => $jsonArray ['overall_stok'],
-                    'create_at' => $jsonArray ['create_at'],
-                    'update_at' => $jsonArray ['update_at'],
+                    'slug' => str_replace(' ', '-', strtolower($jsonArray ['nama'])),
+                    'kode_barang' => $jsonArray ['kode'],
+                    'nama_barang' => $jsonArray ['nama'],
+                    'id_jenis' => $jsonArray ['jenis'],
+                    'id_satuan' => $jsonArray ['satuan']
                 ];
             }
-            if(!$id_barang){
-                $arr['id_barang'] = $jsonArray ['id_barang'];
-                $arr['created_at'] = date('Y-m-d H:i:s');
+            if(!$slug){
 
+                // $in = mysql_fetch_array(mysql_query("SELECT sum(stok) as masuk FROM detail_barang where type='in' AND id_barang='$row[id_barang]'"));
+                // $out = mysql_fetch_array(mysql_query("SELECT sum(stok) as keluar FROM detail_barang where type='out' AND id_barang='$row[id_barang]'"));
+
+                // $overall_stok = ($row['stok']+$in['masuk'])-$out['keluar'];
+
+
+                
+                $arr['create_at'] = date('Y-m-d H:i:s');
                 $ins = $this->barang->insert($arr);
+
                 if($ins){
+                    //untuk manggil detailbarang
+                    if (@$jsonArray['item']) {
+                        $idslug = ['slug' => $arr ['slug']];
+                        $get = $this->barang->show($idslug)->row();
+                        $this->detailbarang($get->id_barang, $jsonArray['item']);
+                    }
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Created',
@@ -204,17 +246,19 @@ class Barang extends RestController {
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else{
-                $id_barang = ['id_barang' => $id_barang];
+                $idslug = ['slug' => $slug];
+                $row = $this->barang->show($idslug)->row_array();
+                $id = ['id_barang' => $row['id_barang']];
+
+                $arr['slug'] = str_replace(' ', '-', strtolower($jsonArray ['nama']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->barang->update($id_barang, $arr);
+                $upd = $this->barang->update($id, $arr);      
+
                 if($upd){
-                    $check = array(
-                        'id_barang' => $id_barang
-                    );
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
-                        'message' => 'Barang ID : '.$id_barang['id_barang'],'was successful update!'
+                        'message' => 'Barang : '.$jsonArray['nama'].' was successful update!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -227,15 +271,23 @@ class Barang extends RestController {
         }
     }
 
-    public function index_get_barang()
+    public function index_get()
     {
         if(@$this->input->get()){
             $val = $this->input->get('val');
-
-            $data = $get->row();
+            // $data = $get->row();
         }else{
-            $get = $this->inv_barang->show();
-            $data = $get->result();
+            $get = $this->barang->show(); //nama model(alias)->nama function yg di model
+            $barang = $get->result_array();
+
+            // $barang = $this->barang->show()->result_array();
+            $data = [];
+            foreach ($barang as $brg) {
+                $detail = $this->detail_barang->show(['id_barang' => $brg['id_barang']])->result_array();
+                $brg['barang'] = $detail;
+                $brg['overall_stok'] = $this->detail_barang->sumStok(['id_barang' => $brg['id_barang']])->row()->stok;
+                $data[] = $brg;
+            }
         }
         if($get->num_rows() > 0){
             $this->response([
@@ -250,21 +302,33 @@ class Barang extends RestController {
                 'data' => []
             ], RestController::HTTP_NOT_FOUND);
         }
+
+        $slug = $koneksi->query("SELECT * FROM inv_barang WHERE overall_stok <= '5'");
+        $data = $slug->fetch_assoc();
+        if ($data) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
+            ], RestCOntroller::HTTP_OK);
+        }
+
     }
 
-	public function index_delete_barang($id_barang)
+	public function index_delete($slug)
 	{
-        if(@$id_barang){
-            $id_barang = ['id_barang' => $id_barang];
-            $get = $this->barang->show($id_barang);
-            $data = $get->row();
+        if(@$slug){
+            $idslug = ['slug' => $slug];
+            $get = $this->barang->show($idslug);
+            
             if($get->num_rows() == 1){
-                $del = $this->barang->delete($id_barang);
+                $data = $get->row_array();
+                $id = ['id_barang' => $data['id_barang']];
+                $del = $this->barang->delete($id);
                 if($del){
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Success delete one Barang',
-                        'message' => 'Barang id_barang : '.$id_barang ['id_barang'].'was deleted!'
+                        'message' => 'Barang : '.$data ['nama_barang'].' was deleted!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -291,94 +355,63 @@ class Barang extends RestController {
 
 
 
-    public function index_post_detail_barang($id_detail_barang='')
+    public function detail_post($serial='')
     {
         $jsonArray = json_decode ($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if(!$id_detail_barang){
-            $this->form_validation->set_rules('id_detail_barang', 'ID Detail Barang', 'trim|required', [
-                'required' => '%s Required'
-            ]);
+        if(!$serial){
             $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
                 'required' => '%s Required'
             ]);
-            $this->form_validation->set_rules('id_barang', 'ID Barang', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('serial_number', 'Serial Number', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('stok', 'Stok', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('id_status', 'ID Status', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('id_type', 'ID Type', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('keterangan', 'Keterangan', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('create_at', 'Create At', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('update_at', 'Update At', 'trim|required', [
+            $this->form_validation->set_rules('item[][]', 'Item', 'trim|required', [
                 'required' => '%s Required'
             ]);
         }
 
-        if($this->form_validation->run() == FALSE && !$id_detail_barang){
+        if($this->form_validation->run() == FALSE && !$serial){
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input required',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else{
-            if(@$id_detail_barang){
-                if(@$id_detail_barang && @$jsonArray ['id_barang']){
-                    $arr['id_barang'] = $josnArray ['id_barang'];
+            if(@$serial){
+                if(@$serial && @$jsonArray ['barang']){
+                    $arr['id_barang'] = $josnArray ['barang'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['serial_number']){
-                    $arr['serial_number'] = $josnArray ['serial_number'];
+                if(@$serial && @$jsonArray ['sn']){
+                    $arr['serial_number'] = $jsonArray ['sn'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['stok']){
-                    $arr['stok'] = $josnArray ['stok'];
+                if(@$serial && @$jsonArray ['stok']){
+                    $arr['stok'] = $jsonArray ['stok'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['id_status']){
-                    $arr['id_status'] = $josnArray ['id_status'];
+                if(@$serial && @$jsonArray ['status']){
+                    $arr['id_status'] = $josnArray ['status'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['id_type']){
-                    $arr['id_type'] = $josnArray ['id_type'];
+                if(@$serial && @$jsonArray ['type']){
+                    $arr['id_type'] = $josnArray ['type'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['keterangan']){
-                    $arr['keterangan'] = $josnArray ['keterangan'];
+                if(@$serial && @$jsonArray ['ket']){
+                    $arr['keterangan'] = $josnArray ['ket'];
                 }
-                if(@$id_detail_barang && @$jsonArray ['create_at']){
-                    $arr['create_at'] = $josnArray ['create_at'];
-                }
-                if(@$id_detail_barang && @$jsonArray ['update_at']){
-                    $arr['update_at'] = $josnArray ['update_at'];
-                }
-            }else{
-                $arr = [
-                    'id_barang' => $jsonArray ['id_barang'],
-                    'serial_number' => $jsonArray ['serial_number'],
-                    'stok' => $jsonArray ['stok'],
-                    'id_status' => $jsonArray ['id_status'],
-                    'id_type' => $jsonArray ['id_type'],
-                    'keterangan' => $jsonArray ['keterangan'],
-                    'create_at' => $jsonArray ['create_at'],
-                    'update_at' => $jsonArray ['update_at'],
-                ];
             }
-            if(!$id_detail_barang){
-                $arr['id_detail_barang'] = $jsonArray ['id_detail_barang'];
-                $arr['created_at'] = date('Y-m-d H:i:s');
+            if(!$serial){
+                $idslug = ['slug' => $jsonArray ['slug']];
+                $get = $this->barang->show($idslug)->row();
+                $ins = $this->detailbarang($get->id_barang, $jsonArray['item']);
 
-                $ins = $this->detail_barang->insert($arr);
                 if($ins){
+                    
+                    // $idsn = ['serial' => $serial];
+                    // $row = $this->barang->show($idsn)->row_array();
+                    // $id = ['id_barang' => $row['id_barang']];
+
+                    // $idbarang = ['id_barang' => $id_barang];
+                    // $overall_stok = $this->barang->show('id_barang', $id_barang)->row();
+                    // $update['overall_stok'] = $overall_stok->overall_stok + (int) $item['stok'];
+                    // $this->barang->update($id_barang, $update);
+
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Created',
@@ -392,17 +425,16 @@ class Barang extends RestController {
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else{
-                $id_detail_barang = ['id_detail_barang' => $id_detail_barang];
+                $id = ['serial_number' => $serial];
+
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->detail_barang->update($id_detail_barang, $arr);
+                $upd = $this->detail_barang->update($id, $arr);
+
                 if($upd){
-                    $check = array(
-                        'id_detail_barang' => $id_detail_barang
-                    );
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
-                        'message' => 'Detail Barang ID : '.$id_detail_barang['id_detail_barang'],'was successful update!'
+                        'message' => 'Detail Barang was successful update!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -415,44 +447,45 @@ class Barang extends RestController {
         }
     }
 
-    public function index_get_detail_barang()
+    public function detail_get()
     {
         if(@$this->input->get()){
             $val = $this->input->get('val');
-
             $data = $get->row();
         }else{
-            $get = $this->inv_detail_barang->show();
+            $get = $this->detail_barang->show();
             $data = $get->result();
         }
         if($get->num_rows() > 0){
             $this->response([
                 'status' => TRUE,
-                'title' => 'Success get Barang',
+                'title' => 'Success get Detail Barang',
                 'data' => $data
             ], RestController::HTTP_OK);
         }else{
             $this->response([
                 'status' => FALSE,
-                'title' => 'Barang not found',
+                'title' => 'Detail Barang not found',
                 'data' => []
             ], RestController::HTTP_NOT_FOUND);
         }
     }
 
-	public function index_delete_detail_barang($id_detail_barang)
+	public function detail_delete($serial_number)
 	{
-        if(@$id_detail_barang){
-            $id_detail_barang = ['id_detail_barang' => $id_detail_barang];
-            $get = $this->inv_detail_barang->show($id_detail_barang);
-            $data = $get->row();
+        if(@$serial_number){
+            $idsn = ['serial_number' => $serial_number];
+            $get = $this->detail_barang->show($idsn);
+            
             if($get->num_rows() == 1){
-                $del = $this->inv_detail_barang->delete($id_detail_barang);
+                $data = $get->row_array();
+                $id = ['id_detail_barang' => $data['id_detail_barang']];
+                $del = $this->detail_barang->delete($id);
                 if($del){
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Success delete one Detail Barang',
-                        'message' => 'Detail Barang id_detail_barang : '.$id_detail_barang ['id_detail_barang'].'was deleted!'
+                        'message' => 'Detail Barang SN : '.$data ['serial_number'].' was deleted!'
                     ], RestController::HTTP_OK);
                 }else{
                     $this->response([
@@ -476,6 +509,29 @@ class Barang extends RestController {
             ], RestController::HTTP_BAD_REQUEST);
         }
 	}
+
+    private function detailbarang($id_barang, $items)
+    {
+        if (@$items) {
+            foreach ($items as $item) {
+                $arr = [
+                    'id_barang' => $id_barang,
+                    'serial_number' => $item['sn'],
+                    'stok' => $item['stok'],
+                    'id_status' => $item['status'],
+                    'id_type' => $item['type'],
+                    'keterangan' => $item['ket']
+                ];
+
+                $arr['create_at'] = date('Y-m-d H:i:s');
+                $this->detail_barang->insert($arr);
+
+            }
+            return true;
+        }else {
+            return false;
+        }
+    }
 
 }
 ?>

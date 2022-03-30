@@ -271,10 +271,14 @@ class Barang extends RestController {
         }
     }
 
-    public function index_get()
+    public function index_get($slug='')
     {
-        if(@$this->input->get()){
-            $val = $this->input->get('val');
+        if(@$slug){
+            // $val = $this->input->get('val');
+            $get = $this->barang->show(['slug' => $slug]);
+            $data = $get->row_array();
+            $detail = $this->detail_barang->show(['id_barang' => $data['id_barang']])->result_array();
+            $data['barang'] = $detail;
             // $data = $get->row();
         }else{
             $get = $this->barang->show(); //nama model(alias)->nama function yg di model
@@ -447,11 +451,13 @@ class Barang extends RestController {
         }
     }
 
-    public function detail_get()
+    public function detail_get($serial='')
     {
-        if(@$this->input->get()){
-            $val = $this->input->get('val');
-            $data = $get->row();
+        if(@$serial){
+            // $val = $this->input->get('val');
+            // $data = $get->row();
+            $get = $this->detail_barang->show(['serial_number' => $serial]);
+            $data = $get->row_array();
         }else{
             $get = $this->detail_barang->show();
             $data = $get->result();

@@ -159,11 +159,14 @@ class BarangProses extends RestController
         }
     }
 
-    public function index_get()
+    public function index_get($slug='')
     {
-        if (@$this->input->get()) {
-            $val = $this->input->get('val');
-
+        if (@$slug) {
+            // $val = $this->input->get('val');
+            $get = $this->barang_proses->show(['slug' => $slug]);
+            $data = $get->row_array();
+            $detail = $this->detail_barang_proses->show(['id_barang_proses' => $data['id_barang_proses']])->result_array();
+            $data['barang_proses'] = $detail;
         }else {
             $get = $this->barang_proses->show();
             $barang_proses = $get->result_array();
@@ -304,11 +307,12 @@ class BarangProses extends RestController
         }
     }
 
-    public function detail_get()
+    public function detail_get($slug='')
     {
-        if (@$this->input->get()) {
-            $val = $this->input->get('val');
-            $data = $get->row();
+        if (@$slug) {
+            // $val = $this->input->get('val');
+            $get = $this->detail_barang_proses->show(['slug' => $slug]);
+            $data = $get->row_array();
         }else {
             $get = $this->detail_barang_proses->show();
             $data = $get->result();

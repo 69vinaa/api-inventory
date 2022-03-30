@@ -127,15 +127,15 @@ class SatuanBarang extends RestController {
         }
     }
 
-    public function index_get()
+    public function index_get($slug='')
     {
-        if(@$this->input->get()){
-            $val = $this->input->get('val');
-
-            $data = $get->row();
+        if(@$slug){
+            // $val = $this->input->get('val');
+            $get = $this->satuan_barang->show(['slug' => $slug]);
+            $data = $get->row_array();
         }else{
             $get = $this->satuan_barang->show();
-            $data = $get->result();
+            $data = $get->result_array();
         }
         if($get->num_rows() > 0){
             $this->response([

@@ -5,7 +5,7 @@ class MClientPeplink extends CI_Model {
 
 	private $tbl = 'client_peplink_list';
 
-    public function show($where='')
+    public function show($where='', $limit='', $offset='')
     {
         $this->db->select('*');
         $this->db->from($this->tbl);
@@ -13,7 +13,18 @@ class MClientPeplink extends CI_Model {
         {
             $this->db->where($where);
         }
-        // $this->db->order_by('id_satuan', 'asc');
+        
+        if (@$limit) {
+            $this->db->limit(@$limit, @$offset);
+        }
+        return $this->db->get();
+    }
+
+    public function findBranch()
+    {
+        $this->db->select('dc');
+        $this->db->from($this->tbl);
+        $this->db->group_by('db');
         return $this->db->get();
     }
 

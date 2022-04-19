@@ -55,6 +55,9 @@ $route['translate_uri_dashes'] = FALSE;
 
 $route['Auth']='Users/index';
 
+$route['Branch']['GET'] = 'Client/branch/';
+$route['Branch/(:any)']['GET'] = 'Client/branch/$1';
+
 $route['inv_barang']='Barang/index';
 $route['inv_barang/(:any)']='Barang/index/$1';
 

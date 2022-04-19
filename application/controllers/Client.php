@@ -52,19 +52,53 @@ class Client extends RestController {
 	public function index_get($slug='')
 	{
 		$filter = [];
-		if ($this->input->get('dc')) {
+		if (@$this->input->get('dc')) {
 			$filter['dc'] = $this->input->get('dc');
+		}
+
+		$limit = '';
+		$offset = 0;
+
+		if (@$this->input->get('limit') && @$this->input->get('offset')) {
+			$limit = $this->input->get('limit');
+			$offset = $this->input->get('offset');
 		}
 
 		if(@$slug){
 			$filter['slug'] = $slug;
-			$get = $this->client->show($filter);
+			
+			$get = $this->client->show($filter, $limit, $offset);
 			$data = $get->row_array();
 		}else{
-			$get = $this->client->show($filter);
+			$get = $this->client->show($filter, $limit, $offset);
 			$data = $get->result_array();
 		}
 
+		if($get->num_rows() > 0){
+			$this->response([
+				'status' => TRUE,
+				'title' => 'Success Get Client',
+				'data' => $data
+			], RestController::HTTP_OK);
+		}else{
+			$this->response([
+				'status' => FALSE,
+				'title' => 'Client not found',
+				'data' => []
+			], RestController::HTTP_NOT_FOUND);
+		}
+	}
+
+	public function branch($dc='')
+	{
+		if(@$dc){
+			$filter['dc'] = $dc;
+			$get = $this->client->show($filter);
+			$data = $get->result_array();
+		}else{
+			$get = $this->client->findBranch();
+			$data = $get->result_array();
+		}
 
 		if($get->num_rows() > 0){
 			$this->response([

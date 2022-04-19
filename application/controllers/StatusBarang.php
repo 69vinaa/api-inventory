@@ -158,7 +158,7 @@ class StatusBarang extends RestController {
 
             if($get->num_rows() == 1){
                 $data = $get->row_array();
-                $id = ['id_satuan' => $data['id_satuan']];
+                $id = ['id_status' => $data['id_status']];
                 $del = $this->status_barang->delete($id);
                 if($del){
                     $this->response([

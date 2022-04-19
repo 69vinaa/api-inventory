@@ -49,9 +49,9 @@ class JenisBarang extends RestController {
 
     private function _key_exists($key)
     {
-    return $this->rest->db
-    ->where(config_item('rest_key_column'), $key)
-    ->count_all_results(config_item('rest_keys_table')) > 0;
+        return $this->rest->db
+        ->where(config_item('rest_key_column'), $key)
+        ->count_all_results(config_item('rest_keys_table')) > 0;
     }
 
     public function index_post($slug='')
@@ -135,11 +135,8 @@ class JenisBarang extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->jenis_barang->show(['slug' => $slug]);
             $data = $get->row_array();
-            
-            // $data = $get->row();
         }else{
             $get = $this->jenis_barang->show();
             $data = $get->result_array();

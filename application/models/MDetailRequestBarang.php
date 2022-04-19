@@ -1,20 +1,19 @@
 <?php
 defined('BASEPATH') OR exit ('No direct script access allowed');
 
-class MPenerima extends CI_Model
+class MDetailRequestBarang extends CI_Model
 {
-    private $tbl = 'inv_penerima';
-    private $view = 'v_penerima';
+    private $tbl = 'inv_detail_request';
+    private $view = 'v_detail_request';
 
     public function show($where='')
     {
         $this->db->select('*');
         $this->db->from($this->view);
-        if(@$where && $where != null)
-        {
+        if (@$where && $where != null) {
             $this->db->where($where);
         }
-        $this->db->order_by('id_penerima', 'asc');
+        $this->db->order_by('id_detail_request', 'asc');
         return $this->db->get();
     }
 

@@ -127,7 +127,6 @@ class TypeBarang extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->type_barang->show(['slug' => $slug]);
             $data = $get->row_array();
         }else{

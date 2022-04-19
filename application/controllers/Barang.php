@@ -215,14 +215,6 @@ class Barang extends RestController {
                 ];
             }
             if(!$slug){
-
-                // $in = mysql_fetch_array(mysql_query("SELECT sum(stok) as masuk FROM detail_barang where type='in' AND id_barang='$row[id_barang]'"));
-                // $out = mysql_fetch_array(mysql_query("SELECT sum(stok) as keluar FROM detail_barang where type='out' AND id_barang='$row[id_barang]'"));
-
-                // $overall_stok = ($row['stok']+$in['masuk'])-$out['keluar'];
-
-
-                
                 $arr['create_at'] = date('Y-m-d H:i:s');
                 $ins = $this->barang->insert($arr);
 
@@ -274,17 +266,13 @@ class Barang extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->barang->show(['slug' => $slug]);
             $data = $get->row_array();
             $detail = $this->detail_barang->show(['id_barang' => $data['id_barang']])->result_array();
             $data['barang'] = $detail;
-            // $data = $get->row();
         }else{
             $get = $this->barang->show(); //nama model(alias)->nama function yg di model
             $barang = $get->result_array();
-
-            // $barang = $this->barang->show()->result_array();
             $data = [];
             foreach ($barang as $brg) {
                 $detail = $this->detail_barang->show(['id_barang' => $brg['id_barang']])->result_array();
@@ -307,14 +295,23 @@ class Barang extends RestController {
             ], RestController::HTTP_NOT_FOUND);
         }
 
-        $slug = $koneksi->query("SELECT * FROM inv_barang WHERE overall_stok <= '5'");
-        $data = $slug->fetch_assoc();
-        if ($data) {
-            $this->response([
-                'status' => TRUE,
-                'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
-            ], RestCOntroller::HTTP_OK);
+        if (@$this->barang['overall_stok'] <= 5) {
+            $data = $this->barang['overall_stok']->fetch_assoc();
+            if ($data) {
+                $this->response([
+                    'status' => TRUE,
+                    'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
+                ], RestController::HTTP_OK);
+            }
         }
+        // $slug = $koneksi->query("SELECT * FROM inv_barang WHERE overall_stok <= '5'");
+        // $data = $slug->fetch_assoc();
+        // if ($data) {
+        //     $this->response([
+        //         'status' => TRUE,
+        //         'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
+        //     ], RestController::HTTP_OK);
+        // }
 
     }
 
@@ -357,11 +354,9 @@ class Barang extends RestController {
         }
 	}
 
-
-
     public function detail_post($serial='')
     {
-        $jsonArray = json_decode ($this->input->raw_input_stream, true);
+        $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
         if(!$serial){
@@ -406,16 +401,6 @@ class Barang extends RestController {
                 $ins = $this->detailbarang($get->id_barang, $jsonArray['item']);
 
                 if($ins){
-                    
-                    // $idsn = ['serial' => $serial];
-                    // $row = $this->barang->show($idsn)->row_array();
-                    // $id = ['id_barang' => $row['id_barang']];
-
-                    // $idbarang = ['id_barang' => $id_barang];
-                    // $overall_stok = $this->barang->show('id_barang', $id_barang)->row();
-                    // $update['overall_stok'] = $overall_stok->overall_stok + (int) $item['stok'];
-                    // $this->barang->update($id_barang, $update);
-
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Created',
@@ -430,7 +415,6 @@ class Barang extends RestController {
                 }
             }else{
                 $id = ['serial_number' => $serial];
-
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->detail_barang->update($id, $arr);
 
@@ -451,11 +435,9 @@ class Barang extends RestController {
         }
     }
 
-    public function detail_get($serial='')
+    public function detail_get($serial_number='')
     {
         if(@$serial){
-            // $val = $this->input->get('val');
-            // $data = $get->row();
             $get = $this->detail_barang->show(['serial_number' => $serial]);
             $data = $get->row_array();
         }else{
@@ -528,10 +510,8 @@ class Barang extends RestController {
                     'id_type' => $item['type'],
                     'keterangan' => $item['ket']
                 ];
-
                 $arr['create_at'] = date('Y-m-d H:i:s');
                 $this->detail_barang->insert($arr);
-
             }
             return true;
         }else {

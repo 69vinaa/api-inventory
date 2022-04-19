@@ -108,8 +108,6 @@ class SatuanBarang extends RestController {
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->satuan_barang->update($id, $arr);
 
-                // $this->satuan_barang->update_batch('satuan_barang', $arr, 'id_satuan');
-
                 if($upd){
                     $this->response([
                         'status' => TRUE,
@@ -130,7 +128,6 @@ class SatuanBarang extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->satuan_barang->show(['slug' => $slug]);
             $data = $get->row_array();
         }else{

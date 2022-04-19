@@ -4,16 +4,12 @@ require(APPPATH.'libraries/restserver/src/RestController.php');
 require(APPPATH.'libraries/restserver/src/Format.php');
 use chriskacerguis\RestServer\RestController;
 
-class BarangProses extends RestController
+class RequestBarang extends RestController
 {
     const HTTP_OK = RestController::HTTP_OK;
     const HTTP_CREATED = RestController::HTTP_CREATED;
     const HTTP_BAD_REQUEST = RestController::HTTP_BAD_REQUEST;
     const HTTP_NOT_FOUND = RestController::HTTP_NOT_FOUND;
-
-    private $result = false;
-    public $key = '';
-    public $tokenkey = '';
 
     public function __construct()
     {
@@ -28,9 +24,8 @@ class BarangProses extends RestController
             $this->key = $this->input->request_headers()['token'];
         }
 
-        $this->load->model('MBarangProses', 'barang_proses');
-        $this->load->model('MDetailBarangProses', 'detail_barang_proses');
-        $this->load->model('MPenerima', 'penerima');
+        $this->load->model('MRequestBarang', 'request_barang');
+        $this->load->model('MDetailRequestBarang', 'detail_request_barang');
         $this->load->model('MApproved', 'approved');
         $this->load->model('MApprovedBy', 'approved_by');
         $this->load->model('MToken', 'token');
@@ -51,226 +46,219 @@ class BarangProses extends RestController
         } catch (Exception $e) {
             $this->response([
                 'status' => FALSE,
-                'message' => $e->getMessage()
+                'mesaage' => $e->getMessage()
             ], RestController::HTTP_BAD_REQUEST);
         }
     }
 
-    private function _key_exists($key)
+    public function _key_exists($key)
     {
         return $this->rest->db
         ->where(config_item('rest_key_column'), $key)
         ->count_all_results(config_item('rest_keys_table')) > 0;
     }
 
-    public function index_post($slug='')
+    public function index_post($kode_request='')
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if (!$slug) {
-            $this->form_validation->set_rules('kategori', 'ID Kategori Proses', 'trim|required', [
+        if (!$kode_request) {
+            $this->form_validation->set_rules('kode', 'Kode Request', 'trim|required', [
                 'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('no', 'No Proses', 'trim|required', [
-                'required' => '$s Required'
             ]);
             $this->form_validation->set_rules('user', 'ID User', 'trim|required', [
                 'required' => '%s Required'
             ]);
-            $this->form_validation->set_rules('ket', 'Keterangan', 'trim|required', [
-                'require' => '%s Required'
+            $this->form_validation->set_rules('nama', 'Nama Penerima', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('almt', 'Alamat Penerima', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('notelp', 'No Telp', 'trim|required', [
+                'required' => '%s Required'
             ]);
             $this->form_validation->set_rules('item[][]', 'Item', 'trim|required', [
                 'required' => '%s Required'
             ]);
-
-            if (@$jsonArray['kategori'] == 1) {  
-                $this->form_validation->set_rules('perusahaan', 'ID Perusahaan', 'trim|required', [
-                    'require' => '%s Required'
-                ]);
-                $this->form_validation->set_rules('nama', 'Nama Penerima', 'trim|required', [
-                    'require' => '%s Required'
-                ]);
-                $this->form_validation->set_rules('alamat', 'Alamat Penerima', 'trim|required', [
-                    'require' => '%s Required'
-                ]);
-                $this->form_validation->set_rules('notelp', 'No Telp', 'trim|required', [
-                    'require' => '%s Required'
-                ]);
-            }
         }
 
-        if ($this->form_validation->run() == FALSE && !$slug) {
+        if ($this->form_validation->run() == FALSE && !$kode_request) {
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input required',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else {
-            if (@$slug) {
-                if (@$slug && @$jsonArray['kategori']) {
-                    $arr['id_kategori_proses'] = $jsonArray['kategori'];
+            if (@$kode_request) {
+                if (@$kode_request && @$jsonArray['kode']) {
+                    $arr['kode_request'] = $jsonArray['kode'];
                 }
-                if (@$slug && @$jsonArray['no']) {
-                    $arr['no_proses'] = $jsonArray['no'];
-                }
-                if (@$slug && @$jsonArray['user']) {
+                if (@$kode_request && @$jsonArray['user']) {
                     $arr['id_user'] = $jsonArray['user'];
                 }
-                if (@$slug && @$jsonArray['ket']) {
-                    $arr['keterangan'] = $jsonArray['ket'];
+                if (@$kode_request && @$jsonArray['nama']) {
+                    $arr['penerima'] = $jsonArray['nama'];
+                }
+                if (@$kode_request && @$jsonArray['almt']) {
+                    $arr['alamat'] = $jsonArray['almt'];
+                }
+                if (@$kode_request && @$jsonArray['notelp']) {
+                    $arr['no_telp'] = $jsonArray['notelp'];
                 }
             }else {
-                    $arr = [
-                        'slug' => str_replace(' ', '-', strtolower($jsonArray ['no'])),
-                        'id_kategori_proses' => $jsonArray['kategori'],
-                        'no_proses' => $jsonArray['no'],
-                        'id_user' => $jsonArray['user'],
-                        'keterangan' => $jsonArray['ket']
-                    ];
+                $arr = [
+                    'kode_request' => $jsonArray['kode'],
+                    'id_user' => $jsonArray['user'],
+                    'penerima' => $jsonArray['nama'],
+                    'alamat' => $jsonArray['almt'],
+                    'no_telp' => $jsonArray['notelp']
+                ];
             }
-            if (!$slug) {
-                $arr['tgl_proses_barang'] = date('Y-m-d H:i:s');
+            if (!$kode_request) {
+                $arr['tgl'] = date('Y-m-d H:i:s');
                 $arr['create_at'] = date('Y-m-d H:i:s');
-                $ins = $this->barang_proses->insert($arr);
+
+                $ins = $this->request_barang->insert($arr);
 
                 if ($ins) {
-                    $idslug = ['slug' => $arr['slug']];
-                    $get = $this->barang_proses->show($idslug)->row();
-                    $this->detailbarang($get->id_barang_proses, $jsonArray['item']);
-                    $this->approved($get->id_barang_proses);
-                    
-                    if (@$jsonArray['kategori'] == 1) {
-                        $arr = [
-                            'id_barang_proses' => $get->id_barang_proses,
-                            'id_perusahaan' => $jsonArray['perusahaan'],
-                            'nama_penerima' => $jsonArray['nama'],
-                            'alamat_penerima' => $jsonArray['alamat'],
-                            'no_telp' => $jsonArray['notelp']
-                        ];
-                        $arr['create_at'] = date('Y-m-d H:i:s');
-                        $this->penerima->insert($arr);
-                    }
+
+                    $kode = ['kode_request' => $arr['kode_request']];
+                    $get = $this->request_barang->show($kode)->row();
+                    $this->detailrequest($get->id_request, $jsonArray['item']);
+                    $this->approved($get->id_request);
+
+
+                    // if ($status_approved == 1) {
+                    //     $this->response([
+                    //         'status' => TRUE,
+                    //         'message' => 'Item Request Approved'
+                    //     ]);
+                    // }else {
+                    //     $this->response([
+                    //         'status' => FALSE,
+                    //         'message' => 'Item Request Rejected'
+                    //     ]);
+                    // }
 
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Created',
-                        'message' => 'Barang Proses was successful created!'
-                    ], RestController::HTTP_BAD_REQUEST);
+                        'message' => 'Request was successful created!'
+                    ], RestController::HTTP_CREATED);
                 }else {
                     $this->response([
                         'status' => FALSE,
                         'title' => 'Error Created',
-                        'message' => 'Barang Proses was error created!'
+                        'message' => 'Request was error created!'
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else {
-                $idslug = ['slug' => $slug];
-                $row = $this->barang_proses->show($idslug)->row_array();
-                $id = ['id_barang_proses' => $row['id_barang_proses']];
+                $kode = ['kode_request' => $kode_request];
+                $row = $this->request_barang->show($kode)->row_array();
+                $id = ['id_request' => $row['id_request']];
 
-                $arr['slug'] = str_replace(' ', '-', strtolower($jsonArray['no']));
+                $arr['kode_request'] = str_replace(' ', '-', strtolower($jsonArray['kode']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->barang_proses->update($id, $arr);
+                $upd = $this->request->update($id, $arr);
 
                 if ($upd) {
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
-                        'message' => 'Barang Proses : '.$jsonArray['no'].' was successful update!'
+                        'message' => 'Request was successful update!'
                     ], RestController::HTTP_OK);
                 }else {
                     $this->response([
                         'status' => FALSE,
                         'title' => 'Error Update',
-                        'message' => 'Barang Proses was error update!'
+                        'message' => 'Request was error update!'
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }
         }
     }
 
-    public function index_get($slug='')
+    public function index_get($kode_request='')
     {
-        if (@$slug) {
-            // $val = $this->input->get('val');
-            $get = $this->barang_proses->show(['slug' => $slug]);
+        if (@$kode_request) {
+            $get = $this->request_barang->show(['kode_request' => $kode_request]);
             $data = $get->row_array();
-            $detail = $this->detail_barang_proses->show(['id_barang_proses' => $data['id_barang_proses']])->result_array();
-            $data['barang_proses'] = $detail;
+            $detail = $this->detail_request->show(['id_request' => $data['id_request']])->result_array();
+            $data['request'] = $detail;
         }else {
-            $get = $this->barang_proses->show();
-            $barang_proses = $get->result_array();
-
+            $get = $this->request_barang->show();
+            $request_barang = $get->result_array();
             $data = [];
-            foreach ($barang_proses as $brgp) {
-                $detail = $this->detail_barang_proses->show(['id_barang_proses' => $brgp['id_barang_proses']])->result_array();
-                $brgp['barang_proses'] = $detail;
-                $data[] = $brgp;
+            foreach ($request_barang as $rbrg) {
+                $detail = $this->detail_request_barang->show(['id_request' => $rbrg['id_request']])->result_array();
+                $rbrg['request_barang'] = $detail;
+                $data[] = $rbrg;
             }
         }
         if ($get->num_rows() > 0) {
             $this->response([
                 'status' => TRUE,
-                'title' => 'Success get Barang Proses',
+                'title' => 'Success get Request',
                 'data' => $data
             ], RestController::HTTP_OK);
-        }else{
+        }else {
             $this->response([
                 'status' => FALSE,
-                'title' => 'Barang Proses not found',
+                'title' => 'Request not found',
                 'data' => []
             ], RestController::HTTP_NOT_FOUND);
         }
     }
 
-    public function index_delete($slug)
+    public function index_delete($kode_request)
     {
-        if (@$slug) {
-            $idslug = ['slug' => $slug];
-            $get = $this->barang_proses->show($idslug);
+        if (@$kode_request) {
+            $kode = ['kode_request' => $kode_request];
+            $get = $this->request_barang->show($kode);
 
             if ($get->num_rows() == 1) {
                 $data = $get->row_array();
-                $id = ['id_barang_proses' => $data['id_barang_proses']];
-                $del = $this->barang_proses->delete($id);
+                $id = ['id_request' => $data['id_request']];
+                $del = $this->request_barang->delete($id);
+
                 if ($del) {
                     $this->response([
                         'status' => TRUE,
-                        'title' => 'Success delete one Barang Proses',
-                        'message' => 'Barang Proses : '.$data['no_proses'].' was deleted!'
+                        'title' => 'Success delete one Request',
+                        'message' => 'Request was deleted!'
                     ], RestController::HTTP_OK);
                 }else {
                     $this->response([
                         'status' => FALSE,
-                        'title' => "Barang Proses can't deleted",
-                        'message' => "Can't deleted Barang Proses"
+                        'title' => "Request can't deleted",
+                        'message' => "Can't deleted Request"
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else {
                 $this->response([
                     'status' => FALSE,
-                    'title' => 'Barang not found',
-                    'message' => "ID Barang Proses can't found!"
+                    'title' => 'Request not found',
+                    'message' => "ID Request can't found!"
                 ], RestController::HTTP_NOT_FOUND);
             }
         }else {
             $this->response([
                 'status' => FALSE,
-                'title' => 'ID Barang Proses was required',
-                'message' => 'ID Barang Proses must be required'
+                'title' => 'ID Request was required',
+                'message' => 'ID Request must be required'
             ], RestController::HTTP_BAD_REQUEST);
         }
     }
 
-    public function detail_post($slug='')
+    public function detail_post($id_detail_request)
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if (!$slug) {
-            $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
+        if (!$id_detail_request) {
+            $this->form_validation->set_rules('kode', 'Kode Request', 'trim|required', [
                 'required' => '%s Required'
             ]);
             $this->form_validation->set_rules('item[][]', 'Item', 'trim|required', [
@@ -278,35 +266,32 @@ class BarangProses extends RestController
             ]);
         }
 
-        if ($this->form_validation->run() == FALSE && !$slug) {
+        if ($this->form_validation->run() == FALSE && !$id_detail_request) {
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input required',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else {
-            if (@$slug) {
-                if (@$slug && @$jsonArray['barang_proses']) {
-                    $arr['id_barang_proses'] = $jsonArray['barang_proses'];
+            if (@$id_detail_request) {
+                if (@$id_detail_request && @$jsonArray['request']) {
+                    $arr['id_request'] = $jsonArray['request'];
                 }
-                if (@$slug && @$jsonArray['detail_barang']) {
-                    $arr['id_detail_barang'] = $jsonArray['detail_barang'];
+                if (@$id_detail_request && @$jsonArray['barang']) {
+                    $arr['id_barang'] = $jsonArray['barang'];
                 }
-                if (@$slug && @$jsonArray['status']) {
-                    $arr['id_status'] = $jsonArray['status'];
-                }
-                if (@$slug && @$jsonArray['type']) {
-                    $arr['id_type'] = $jsonArray['type'];
-                }
-                if (@$slug && @$jsonArray['jml']) {
+                if (@$id_detail_request && @$jsonArray['jml']) {
                     $arr['jml_barang'] = $jsonArray['jml'];
                 }
+                if (@$id_detail_request && @$jsonArray['ket']) {
+                    $arr['keterangan'] = $jsonArray['ket'];
+                }
             }
-            if (!$slug) {
-                $idslug = ['slug' => $jsonArray['slug']];
-                $get = $this->barang_proses->show($idslug)->row();
-                $ins = $this->detailbarang($get->id_barang_proses, $jsonArray['item']);
-                
+            if (!$id_detail_request) {
+                $iddr = ['id_detail_request' => $jsonArray['id_detail_request']];
+                $get = $this->request->show($iddr)->row();
+                $ins = $this->detailrequest($get->id_request, $jsonArray['item']);
+
                 if ($ins) {
                     $this->response([
                         'status' => TRUE,
@@ -321,9 +306,9 @@ class BarangProses extends RestController
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else {
-                $id = ['slug' => $slug];
+                $id = ['id_detail_request' => $id_detail_request];
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->detail_barang_proses->update($id, $arr);
+                $upd = $this->detail_request->update($id, $arr);
 
                 if ($upd) {
                     $this->response([
@@ -342,14 +327,10 @@ class BarangProses extends RestController
         }
     }
 
-    public function detail_get($slug='')
+    public function detail_get($id_detail_request='')
     {
-        if (@$slug) {
-            // $val = $this->input->get('val');
-            $get = $this->detail_barang_proses->show(['slug' => $slug]);
-            $data = $get->row_array();
-        }else {
-            $get = $this->detail_barang_proses->show();
+        if (@$id_detail_request) {
+            $get = $this->detail_request->show(['id_detail_request' => $id_detail_request]);
             $data = $get->result();
         }
         if ($get->num_rows() > 0) {
@@ -367,16 +348,16 @@ class BarangProses extends RestController
         }
     }
 
-    public function detail_delete($slug)
+    public function detail_delete($id_detail_request)
     {
-        if (@$slug) {
-            $idslug = ['slug' => $slug];
-            $get = $this->detail_barang_proses->show($idslug);
+        if (@$id_detail_request) {
+            $iddr = ['id_detail_request' => $id_detail_request];
+            $get = $this->detail_request->show($iddr);
 
             if ($get->num_rows() == 1) {
                 $data = $get->row_array();
-                $id = ['id_detail_barang_proses' => $data['id_detail_barang_proses']];
-                $del = $this->detail_barang_proses->delete($id);
+                $id = ['id_detail_request' => $data['id_detail_request']];
+                $del = $this->detail_request->delete($id);
                 if ($del) {
                     $this->response([
                         'status' => TRUE,
@@ -406,20 +387,19 @@ class BarangProses extends RestController
         }
     }
 
-    private function detailbarang($id_barang_proses, $items)
+    private function detailrequest($id_request, $items)
     {
         if (@$items) {
             foreach ($items as $item) {
                 $arr = [
-                    'id_barang_proses' => $id_barang_proses,
-                    'id_detail_barang' => $item['detail_barang'],
-                    'id_status' => $item['status'],
-                    'id_type' => $item['type'],
-                    'jml_barang' => $item['jml']
+                    'id_request' => $id_request,
+                    'id_barang' => $item['barang'],
+                    'jml_barang' => $item['jml'],
+                    'keterangan' => $item['ket']
                 ];
 
                 $arr['create_at'] = date('Y-m-d H:i:s');
-                $this->detail_barang_proses->insert($arr);
+                $this->detail_request_barang->insert($arr);
             }
             return true;
         }else {
@@ -427,17 +407,17 @@ class BarangProses extends RestController
         }
     }
 
-    public function approved($id_barang_proses, $type = 14)
+    public function approved($id_request, $type = 15)
     {
         $get = $this->approved_by->show(['doc_approved' => $type]);
         if ($get->num_rows() > 0) {
             $rows = $get->result_array();
             foreach ($rows as $row) {
                 $arr = [
-                    'id_barang_proses' => $id_barang_proses,
+                    'id_request' => $id_request,
                     'id_user' => $row['approved_by'],
                     'title' => $row['check_name'],
-                    'ordered' => $row['ordered'],
+                    'ordered' => $row['ordered']
                 ];
 
                 $arr['create_at'] = date('Y-m-d H:i:s');
@@ -448,6 +428,16 @@ class BarangProses extends RestController
             return false;
         }
     }
-}
+        
 
+// biar statusnya jadi 1
+    // public function status($id_request, $approved_id)
+    // {
+    //     if ($this->approved->updateStatus($approved_id)) {
+    //         return true;
+    //     }else {
+    //         return false;
+    //     }
+    // }
+}
 ?>

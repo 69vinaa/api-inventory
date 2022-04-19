@@ -48,17 +48,5 @@ class MDetailBarang extends CI_Model
         return $this->db->get($this->v_detail_barang); 
     }
 
-    // public function add_stok($where)
-    // {
-    //     $this->db->select_sum('stok');
-    //     $this->db->get('id_barang');
-    //     if($where->num_rows() > 0)
-    //     {
-    //         return $query->row()->stok;
-    //     }else{
-    //         return 0;
-    //     }
-    // }
-
 }
 ?>

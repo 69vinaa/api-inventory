@@ -26,8 +26,28 @@ class MApproved extends CI_Model
     public function update($where, $object)
     {
         $this->db->where($where);
-        $this->db->update($this->$tbl, $object);
+        $this->db->update($this->tbl, $object);
         return(($this->db->affected_rows() > 0) ? true : false);
     }
+
+    public function select($query)
+    {
+        $this->db->get_where($this->tbl, array('ordered' => $ordered), $limit, $offset);
+        $query = $this->db->get($tbl);
+    }
+
+    public function getMax($query)
+    {
+        $this->db->select_max('ordered');
+        $query = $this->db->get($tbl);
+    }
+//biar statusnya jadi 1
+    // public function updateStatus($approved_id)
+    // {
+    //     $this->db->set('status_approved', 1, FALSE);
+    //     $where = array('id_approved_history' => $approved_id);
+    //     $this->db->where($where);
+    //     $this->db->update('inv_approved_history');
+    // }
 }
 ?>

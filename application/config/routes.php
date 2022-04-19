@@ -53,23 +53,35 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['inv_barang']='Barang/index';
-$route['inv_barang/(:any)']='Barang/index/$1';
+$route['approved']='Approved/index';
+$route['approved/(:any)']='Approved/index/$1';
 
-$route['inv_barang_proses']='BarangProses/index';
-$route['inv_barang_proses/(:any)']='BarangProses/index/$1';
+$route['barang']='Barang/index';
+$route['barang/(:any)']='Barang/index/$1';
 
-$route['inv_jenis_barang']='JenisBarang/index';
-$route['inv_jenis_barang/(:any)']='JenisBarang/index/$1';
+$route['barang-detail']='Barang/detail';
+$route['barang-detail/(:any)']='Barang/detail/$1';
 
-$route['inv_kategori_proses']='KategoriProses/index';
-$route['inv_kategori_proses/(:any)']='KategoriProses/index/$1';
+$route['barang-proses']='BarangProses/index';
+$route['barang-proses/(:any)']='BarangProses/index/$1';
 
-$route['inv_satuan_barang']='SatuanBarang/index';
-$route['inv_satuan_barang/(:any)']='SatuanBarang/index/$1';
+$route['barang-proses-detail']='BarangProses/detail';
+$route['barang-proses-detail/(:any)']='BarangProses/detail/$1';
 
-$route['inv_status_barang']='StatusBarang/index';
-$route['inv_status_barang/(:any)']='StatusBarang/index/$1';
+$route['jenis-barang']='JenisBarang/index';
+$route['jenis-barang/(:any)']='JenisBarang/index/$1';
 
-$route['type_barang']='CTypeBarang/index';
-$route['type_barang/(:any)']='CTypeBarang/index/$1';
+$route['kategori-proses']='KategoriProses/index';
+$route['kategori-proses/(:any)']='KategoriProses/index/$1';
+
+$route['request-barang']='RequestBarang/index';
+$route['request-barang/(:any)']='RequestBarang/index/$1';
+
+$route['satuan-barang']='SatuanBarang/index';
+$route['satuan-barang/(:any)']='SatuanBarang/index/$1';
+
+$route['status-barang']='StatusBarang/index';
+$route['status-barang/(:any)']='StatusBarang/index/$1';
+
+$route['type-barang']='TypeBarang/index';
+$route['type-barang/(:any)']='TypeBarang/index/$1';

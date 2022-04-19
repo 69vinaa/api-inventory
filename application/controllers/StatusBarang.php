@@ -103,7 +103,6 @@ class StatusBarang extends RestController {
                 $idslug = ['slug' => $slug];
                 $row = $this->status_barang->show($idslug)->row_array();
                 $id = ['id_status' => $row['id_status']];
-
                 $arr['slug'] = str_replace(' ', '-', strtolower($jsonArray ['status']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->status_barang->update($id, $arr);
@@ -128,7 +127,6 @@ class StatusBarang extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->status_barang->show(['slug' => $slug]);
             $data = $get->row_array();
         }else{
@@ -158,7 +156,7 @@ class StatusBarang extends RestController {
 
             if($get->num_rows() == 1){
                 $data = $get->row_array();
-                $id = ['id_satuan' => $data['id_satuan']];
+                $id = ['id_status' => $data['id_status']];
                 $del = $this->status_barang->delete($id);
                 if($del){
                     $this->response([

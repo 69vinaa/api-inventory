@@ -26,7 +26,7 @@ class Approved extends RestController
 
         $this->load->model('MApproved', 'approved');
         $this->load->model('MApprovedBy', 'approved_by');
-        $this->load->model('MBarangProses', 'barang_proses');
+        $this->load->model('MDetailBarang', 'detail_barang');
         $this->load->model('MToken', 'token');
     }
 
@@ -62,15 +62,6 @@ class Approved extends RestController
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if (!$id_approved_history) {
-            $this->form_validation->set_rules('status', 'Status Approved', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('ket', 'Keterangan', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-        }
-
         if ($this->form_validation->run() == FALSE && !$id_approved_history) {
             $this->response([
                 'status' => FALSE,
@@ -88,8 +79,21 @@ class Approved extends RestController
             }
 
             if (@$id_approved_history) {
-                $id = ['id_approved_history' => $id_approved_history];
+                $where = ['id_user' => $jsonArray['user']];
+                if ($jsonArray['type'] == 0) {
+                    $whereMax = ['id_request' => $jsonArray['id']];
+                    $where['id_request'] = $jsonArray['id'];
+                }else {
+                    $whereMax = ['id_barang_proses' => $jsonArray['id']];
+                    $where['id_barang_proses'] = $jsonArray['id'];
+                }
+                $get = $this->approved->show($where)->row();
+                $getMax = $this->approved->showMax($whereMax)->row();
+                if ($get->ordered == $getMax->ordered) {
+                    $this->detail_barang->update($jsonArray['status'] = 1);
+                }
 
+                $id = ['id_approved_history' => $id_approved_history];
                 $arr['time_approved'] = date('Y-m-d H:i:s');
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->approved->update($id, $arr);
@@ -123,7 +127,7 @@ class Approved extends RestController
             $this->response([
                 'status' => TRUE,
                 'title' => 'Success get Approve',
-                'data' => $data
+                'data' => $data 
             ], RestController::HTTP_OK);
         }else {
             $this->response([

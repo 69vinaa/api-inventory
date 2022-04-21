@@ -62,6 +62,9 @@ $route['barang/(:any)']='Barang/index/$1';
 $route['barang-detail']='Barang/detail';
 $route['barang-detail/(:any)']='Barang/detail/$1';
 
+$route['barang-kodeMax']='Barang/kodeMax';
+$route['barang-kodeMax/(:any)']='Barang/kodeMax/$1';
+
 $route['barang-proses']='BarangProses/index';
 $route['barang-proses/(:any)']='BarangProses/index/$1';
 

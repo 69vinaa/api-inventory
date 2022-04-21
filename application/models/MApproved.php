@@ -30,17 +30,15 @@ class MApproved extends CI_Model
         return(($this->db->affected_rows() > 0) ? true : false);
     }
 
-    public function select($query)
-    {
-        $this->db->get_where($this->tbl, array('ordered' => $ordered), $limit, $offset);
-        $query = $this->db->get($tbl);
-    }
-
-    public function getMax($query)
+    public function showMax($where='')
     {
         $this->db->select_max('ordered');
-        $query = $this->db->get($tbl);
+        if (@$where && $where != null) {
+            $this->db->where($where);
+        }
+        return $this->db->get($this->tbl);
     }
+
 //biar statusnya jadi 1
     // public function updateStatus($approved_id)
     // {

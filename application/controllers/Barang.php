@@ -214,10 +214,11 @@ class Barang extends RestController {
                     'id_satuan' => $jsonArray ['satuan']
                 ];
             }
+            $this->checkNamaBarang($arr['slug']);
             if(!$slug){
                 $arr['create_at'] = date('Y-m-d H:i:s');
                 $ins = $this->barang->insert($arr);
-
+            
                 if($ins){
                     //untuk manggil detailbarang
                     if (@$jsonArray['item']) {
@@ -312,7 +313,6 @@ class Barang extends RestController {
         //         'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
         //     ], RestController::HTTP_OK);
         // }
-
     }
 
 	public function index_delete($slug)
@@ -519,5 +519,29 @@ class Barang extends RestController {
         }
     }
 
+    private function checkNamaBarang($slug)
+    {
+        $idslug = ['slug' => $slug];
+        $get = $this->barang->show($idslug);
+        if ($get->num_rows() == 1) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Barang sudah tersedia'
+            ], RestController::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function kodeMax_get($kode_barang='')
+    {
+        $getMax = $this->barang->showMax();
+        $data = $getMax->row();
+        if ($data) {
+            $this->response([
+                'status' => TRUE,
+                'title' => 'Success get Max Kode Barang',
+                'data' => $data
+            ], RestController::HTTP_OK);
+        }
+    }
 }
 ?>

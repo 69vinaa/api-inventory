@@ -80,6 +80,9 @@ $route['kategori-proses/(:any)']='KategoriProses/index/$1';
 $route['request-barang']='RequestBarang/index';
 $route['request-barang/(:any)']='RequestBarang/index/$1';
 
+$route['request-barang-detail']='RequestBarang/detail';
+$route['request-barang-detail/(:any)']='RequestBarang/detail/$1';
+
 $route['satuan-barang']='SatuanBarang/index';
 $route['satuan-barang/(:any)']='SatuanBarang/index/$1';
 

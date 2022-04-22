@@ -69,6 +69,7 @@ class Approved extends RestController
             $this->form_validation->set_rules('title', 'Title', 'trim|required');
             $this->form_validation->set_rules('order', 'Ordered', 'trim|required');
         }
+        validasi($this->form_validation);
 
         if ($this->form_validation->run() == FALSE && !$id_approved_history) {
             $this->response([

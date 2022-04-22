@@ -213,8 +213,9 @@ class Barang extends RestController {
                     'id_jenis' => $jsonArray ['jenis'],
                     'id_satuan' => $jsonArray ['satuan']
                 ];
+                $this->checkNamaBarang($arr['slug']);
             }
-            $this->checkNamaBarang($arr['slug']);
+            
             if(!$slug){
                 $arr['create_at'] = date('Y-m-d H:i:s');
                 $ins = $this->barang->insert($arr);

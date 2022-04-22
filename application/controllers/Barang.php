@@ -530,7 +530,7 @@ class Barang extends RestController {
         $get = $this->barang->show($idslug);
         if ($get->num_rows() == 1) {
             $this->response([
-                'status' => TRUE,
+                'status' => FALSE,
                 'message' => 'Barang sudah tersedia'
             ], RestController::HTTP_BAD_REQUEST);
         }

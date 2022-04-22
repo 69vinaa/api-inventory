@@ -437,8 +437,8 @@ class Barang extends RestController {
 
     public function detail_get($serial_number='')
     {
-        if(@$serial){
-            $get = $this->detail_barang->show(['serial_number' => $serial]);
+        if(@$serial_number){
+            $get = $this->detail_barang->show(['serial_number' => $serial_number]);
             $data = $get->row_array();
         }else{
             $get = $this->detail_barang->show();
@@ -510,7 +510,6 @@ class Barang extends RestController {
                     'id_type' => $item['type'],
                     'keterangan' => $item['ket']
                 ];
-                
                 if ($type == 'insert') {
                     $arr['create_at'] = date('Y-m-d H:i:s');
                     $this->detail_barang->insert($arr);

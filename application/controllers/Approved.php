@@ -63,21 +63,11 @@ class Approved extends RestController
         $postReal = $this->form_validation->set_data($jsonArray);
 
         if (!$id_approved_history) {
-            $this->form_validation->set_rules('request', 'ID Request', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('barang_proses', 'ID Barang Proses', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('user', 'ID User', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('title', 'Title', 'trim|required', [
-                'required' => '%s Required'
-            ]);
-            $this->form_validation->set_rules('order', 'Ordered', 'trim|required', [
-                'required' => '%s Required'
-            ]);
+            $this->form_validation->set_rules('request', 'ID Request', 'trim|required');
+            $this->form_validation->set_rules('barang_proses', 'ID Barang Proses', 'trim|required');
+            $this->form_validation->set_rules('user', 'ID User', 'trim|required');
+            $this->form_validation->set_rules('title', 'Title', 'trim|required');
+            $this->form_validation->set_rules('order', 'Ordered', 'trim|required');
         }
 
         if ($this->form_validation->run() == FALSE && !$id_approved_history) {

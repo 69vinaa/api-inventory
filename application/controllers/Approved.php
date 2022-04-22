@@ -62,6 +62,24 @@ class Approved extends RestController
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
+        if (!$id_approved_history) {
+            $this->form_validation->set_rules('request', 'ID Request', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('barang_proses', 'ID Barang Proses', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('user', 'ID User', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('title', 'Title', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+            $this->form_validation->set_rules('order', 'Ordered', 'trim|required', [
+                'required' => '%s Required'
+            ]);
+        }
+
         if ($this->form_validation->run() == FALSE && !$id_approved_history) {
             $this->response([
                 'status' => FALSE,
@@ -79,6 +97,7 @@ class Approved extends RestController
             }
 
             if (@$id_approved_history) {
+                
                 $where = ['id_user' => $jsonArray['user']];
                 if ($jsonArray['type'] == 0) {
                     $whereMax = ['id_request' => $jsonArray['id']];
@@ -90,13 +109,14 @@ class Approved extends RestController
                 $get = $this->approved->show($where)->row();
                 $getMax = $this->approved->showMax($whereMax)->row();
                 if ($get->ordered == $getMax->ordered) {
-                    $this->detail_barang->update($jsonArray['status'] = 1);
+                    $this->detail_barang->update(['id_status']);
                 }
 
                 $id = ['id_approved_history' => $id_approved_history];
                 $arr['time_approved'] = date('Y-m-d H:i:s');
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->approved->update($id, $arr);
+                $this->approve($where['id_user']);
                 if ($upd) {
                     $this->response([
                         'status' => TRUE,

@@ -415,8 +415,8 @@ class Barang extends RestController {
                 }
             }else{
                 $id = ['serial_number' => $serial];
-                $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->detail_barang->update($id, $arr);
+                $get = $this->detail_barang->show($id)->row();
+                $upd = $this->detailbarang($get->id_barang, $jsonArray['item'], 'update');
 
                 if($upd){
                     $this->response([
@@ -498,7 +498,7 @@ class Barang extends RestController {
         }
 	}
 
-    private function detailbarang($id_barang, $items)
+    private function detailbarang($id_barang, $items, $type='insert')
     {
         if (@$items) {
             foreach ($items as $item) {
@@ -510,8 +510,14 @@ class Barang extends RestController {
                     'id_type' => $item['type'],
                     'keterangan' => $item['ket']
                 ];
-                $arr['create_at'] = date('Y-m-d H:i:s');
-                $this->detail_barang->insert($arr);
+                
+                if ($type == 'insert') {
+                    $arr['create_at'] = date('Y-m-d H:i:s');
+                    $this->detail_barang->insert($arr);
+                }else {
+                    $arr['update_at'] = date('Y-m-d H:i:s');
+                    $this->detail_barang->update(['serial_number'=> $arr['serial_number'], 'id_barang' => $id_barang], $arr);
+                }
             }
             return true;
         }else {

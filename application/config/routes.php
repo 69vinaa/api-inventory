@@ -97,3 +97,10 @@ $route['status-barang/(:any)']='StatusBarang/index/$1';
 
 $route['type-barang']='TypeBarang/index';
 $route['type-barang/(:any)']='TypeBarang/index/$1';
+
+// Mergering
+$route['Auth']='Users/index';
+
+$route['Branch']['GET']='Client/branch/';
+$route['Branch/(:any)']['GET']='Client/branch/$1';
+// End

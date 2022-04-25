@@ -449,7 +449,7 @@ class BarangProses extends RestController
         }
     }
 
-    public function noMax($no_proses='')
+    public function noMax_get($no_proses='')
     {
         $getMax = $this->barang_proses->showMax();
         $data = $getMax->row();

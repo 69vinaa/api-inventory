@@ -36,5 +36,14 @@ class MRequestBarang extends CI_Model
         $this->db->delete($this->tbl);
         return(($this->db->affected_rows() > 0) ? true : false);
     }
+
+    public function showMax($where='')
+    {
+        $this->db->select_max('kode_request');
+        if (@$where && $where != null) {
+            $this->db->where($where);
+        }
+        return $this->db->get($this->view);
+    }
 }
 ?>

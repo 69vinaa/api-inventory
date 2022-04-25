@@ -185,7 +185,7 @@ class RequestBarang extends RestController
         if (@$kode_request) {
             $get = $this->request_barang->show(['kode_request' => $kode_request]);
             $data = $get->row_array();
-            $detail = $this->detail_request->show(['id_request' => $data['id_request']])->result_array();
+            $detail = $this->detail_request_barang->show(['id_request' => $data['id_request']])->result_array();
             $data['request'] = $detail;
         }else {
             $get = $this->request_barang->show();
@@ -330,7 +330,10 @@ class RequestBarang extends RestController
     public function detail_get($id_detail_request='')
     {
         if (@$id_detail_request) {
-            $get = $this->detail_request->show(['id_detail_request' => $id_detail_request]);
+            $get = $this->detail_request_barang->show(['id_detail_request' => $id_detail_request]);
+            $data = $get->row_array();
+        }else {
+            $get = $this->detail_request_barang->show();
             $data = $get->result();
         }
         if ($get->num_rows() > 0) {
@@ -426,6 +429,19 @@ class RequestBarang extends RestController
             return true;
         }else {
             return false;
+        }
+    }
+
+    public function kodeMax_get($kode_request='')
+    {
+        $getMax = $this->request_barang->showMax();
+        $data = $getMax->row();
+        if ($data) {
+            $this->response([
+                'status' => TRUE,
+                'title' => 'Success get Max Kode Request',
+                'data' => $data
+            ], RestController::HTTP_OK);
         }
     }
         

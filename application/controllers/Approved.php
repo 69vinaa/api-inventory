@@ -27,6 +27,7 @@ class Approved extends RestController
         $this->load->model('MApproved', 'approved');
         $this->load->model('MApprovedBy', 'approved_by');
         $this->load->model('MDetailBarang', 'detail_barang');
+        $this->load->model('MDetailBarangProses', 'detail_barang_proses');
         $this->load->model('MToken', 'token');
     }
 
@@ -62,14 +63,24 @@ class Approved extends RestController
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if (!$id_approved_history) {
-            $this->form_validation->set_rules('request', 'ID Request', 'trim|required');
-            $this->form_validation->set_rules('barang_proses', 'ID Barang Proses', 'trim|required');
-            $this->form_validation->set_rules('user', 'ID User', 'trim|required');
-            $this->form_validation->set_rules('title', 'Title', 'trim|required');
-            $this->form_validation->set_rules('order', 'Ordered', 'trim|required');
-        }
-        validasi($this->form_validation);
+        
+        
+        $this->form_validation->set_rules('user', 'ID User', 'trim|required', [
+            'Required' => '$s Required'
+        ]);
+        $this->form_validation->set_rules('id', 'ID Request/ID Barang Proses', 'trim|required', [
+            'Required' => '$s Required'
+        ]);
+        $this->form_validation->set_rules('type', '0/1', 'trim|required', [
+            'Required' => '$s Required'
+        ]);
+        $this->form_validation->set_rules('status', 'Status Approved', 'trim|required', [
+            'Required' => '$s Required'
+        ]);
+        $this->form_validation->set_rules('ket', 'Keterangan', 'trim|required', [
+            'Required' => '$s Required'
+        ]);
+        
 
         if ($this->form_validation->run() == FALSE && !$id_approved_history) {
             $this->response([
@@ -99,15 +110,22 @@ class Approved extends RestController
                 }
                 $get = $this->approved->show($where)->row();
                 $getMax = $this->approved->showMax($whereMax)->row();
-                if ($get->ordered == $getMax->ordered) {
-                    $this->detail_barang->update(['id_status']);
+                if ($get->ordered == $getMax->ordered && $jsonArray['type'] != 0) {
+
+                    $this->detail_barang_proses->show($where['id_barang_proses']);
+                    $get = $this->barang_proses->show(['id_detail_barang' > 1]);
+                    foreach ($gets as $get) {
+                        $this->detail_barang->update(['id_detail_barang' => $id], ['id_status' => 1]);
+                    }
+                    
+
                 }
 
                 $id = ['id_approved_history' => $id_approved_history];
                 $arr['time_approved'] = date('Y-m-d H:i:s');
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->approved->update($id, $arr);
-                $this->approve($where['id_user']);
+                
                 if ($upd) {
                     $this->response([
                         'status' => TRUE,

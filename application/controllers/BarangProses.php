@@ -448,6 +448,19 @@ class BarangProses extends RestController
             return false;
         }
     }
+
+    public function noMax($no_proses='')
+    {
+        $getMax = $this->barang_proses->showMax();
+        $data = $getMax->row();
+        if ($data) {
+            $this->response([
+                'status' => TRUE,
+                'title' => 'Success get Max No Proses',
+                'data' => $data
+            ], RestController::HTTP_OK);
+        }
+    }
 }
 
 ?>

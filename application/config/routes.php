@@ -71,6 +71,9 @@ $route['barang-proses/(:any)']='BarangProses/index/$1';
 $route['barang-proses-detail']='BarangProses/detail';
 $route['barang-proses-detail/(:any)']='BarangProses/detail/$1';
 
+$route['barang-proses-noMax']='BarangProses/kodeMax';
+$route['barang-proses-noMax/(:any)']='BarangProses/kodeMax/$1';
+
 $route['jenis-barang']='JenisBarang/index';
 $route['jenis-barang/(:any)']='JenisBarang/index/$1';
 
@@ -82,6 +85,9 @@ $route['request-barang/(:any)']='RequestBarang/index/$1';
 
 $route['request-barang-detail']='RequestBarang/detail';
 $route['request-barang-detail/(:any)']='RequestBarang/detail/$1';
+
+$route['request-barang-kodeMax']='RequestBarang/kodeMax';
+$route['request-barang-kodeMax/(:any)']='RequestBarang/kodeMax/$1';
 
 $route['satuan-barang']='SatuanBarang/index';
 $route['satuan-barang/(:any)']='SatuanBarang/index/$1';

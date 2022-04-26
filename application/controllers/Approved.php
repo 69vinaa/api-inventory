@@ -108,29 +108,24 @@ class Approved extends RestController
                     $whereMax = ['id_barang_proses' => $jsonArray['id']];
                     $where['id_barang_proses'] = $jsonArray['id'];
                 }
-                $get = $this->approved->show($where)->row();
-                $getMax = $this->approved->showMax($whereMax)->row();
-                if ($get->ordered == $getMax->ordered && $jsonArray['type'] != 0) {
-
-                    $get = $this->detail_barang_proses->show($where['id_barang_proses']);
-                    $data = $get->row_array();
-                    $detail = $this->detail_barang_proses->show(['id_detail_barang' => $data['id_detail_barang']] > 1);
-                    foreach ($detail as $dtl) {
-                        $this->detail_barang->update(['id_detail_barang' => $row], ['id_status' => 1]);
-                    }
-                    
-                    // if ($detail->num_rows() > 1) {
-                    //     $rows = $detail->result_array();
-                        
-                    // }
-                    
-                }
-
                 $id = ['id_approved_history' => $id_approved_history];
                 $arr['time_approved'] = date('Y-m-d H:i:s');
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->approved->update($id, $arr);
-                
+
+                $get = $this->approved->show($where)->row();
+                $getMax = $this->approved->showMax($whereMax)->row();
+                if ($get->ordered == $getMax->ordered && $jsonArray['type'] != 0) {
+                    $get = $this->detail_barang_proses->show(['id_barang_proses' => $where['id_barang_proses']]);
+                    if ($get->num_rows() > 0) {
+                        $rows = $get->result_array();
+                        foreach ($rows as $row) {
+                        $this->detail_barang->update(['id_detail_barang' => $row['id_detail_barang']], ['id_status' => 1]); //agar saat approved status barang langsung berubah
+                        $this->detail_barang_proses->update(['id_barang_proses' => $row['id_barang_proses']], ['id_status' => 1]);
+                        }
+                    }
+                }
+
                 if ($upd) {
                     $this->response([
                         'status' => TRUE,

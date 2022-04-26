@@ -187,6 +187,8 @@ class RequestBarang extends RestController
             $data = $get->row_array();
             $detail = $this->detail_request_barang->show(['id_request' => $data['id_request']])->result_array();
             $data['request'] = $detail;
+            $approved = $this->approved->show(['id_request' => $data['id_request']])->result_array();
+            $data['approved'] = $approved;
         }else {
             $get = $this->request_barang->show();
             $request_barang = $get->result_array();

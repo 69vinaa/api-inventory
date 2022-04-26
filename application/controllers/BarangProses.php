@@ -199,6 +199,8 @@ class BarangProses extends RestController
             $data = $get->row_array();
             $detail = $this->detail_barang_proses->show(['id_barang_proses' => $data['id_barang_proses']])->result_array();
             $data['barang_proses'] = $detail;
+            $approved = $this->approved->show(['id_barang_proses' => $data['id_barang_proses']])->result_array();
+            $data['approved'] = $approved;
         }else {
             $get = $this->barang_proses->show();
             $barang_proses = $get->result_array();

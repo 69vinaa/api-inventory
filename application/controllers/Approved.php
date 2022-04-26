@@ -71,7 +71,7 @@ class Approved extends RestController
         $this->form_validation->set_rules('id', 'ID Request/ID Barang Proses', 'trim|required', [
             'Required' => '$s Required'
         ]);
-        $this->form_validation->set_rules('type', '0/1', 'trim|required', [
+        $this->form_validation->set_rules('type', '0 (Request)/1 (Barang)', 'trim|required', [
             'Required' => '$s Required'
         ]);
         $this->form_validation->set_rules('status', 'Status Approved', 'trim|required', [
@@ -112,13 +112,18 @@ class Approved extends RestController
                 $getMax = $this->approved->showMax($whereMax)->row();
                 if ($get->ordered == $getMax->ordered && $jsonArray['type'] != 0) {
 
-                    $this->detail_barang_proses->show($where['id_barang_proses']);
-                    $get = $this->barang_proses->show(['id_detail_barang' > 1]);
-                    foreach ($gets as $get) {
-                        $this->detail_barang->update(['id_detail_barang' => $id], ['id_status' => 1]);
+                    $get = $this->detail_barang_proses->show($where['id_barang_proses']);
+                    $data = $get->row_array();
+                    $detail = $this->detail_barang_proses->show(['id_detail_barang' => $data['id_detail_barang']] > 1);
+                    foreach ($detail as $dtl) {
+                        $this->detail_barang->update(['id_detail_barang' => $row], ['id_status' => 1]);
                     }
                     
-
+                    // if ($detail->num_rows() > 1) {
+                    //     $rows = $detail->result_array();
+                        
+                    // }
+                    
                 }
 
                 $id = ['id_approved_history' => $id_approved_history];

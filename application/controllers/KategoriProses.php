@@ -109,9 +109,6 @@ class KategoriProses extends RestController {
                 $upd = $this->kategori_proses->update($id, $arr);
                 
                 if($upd){
-                    $check = array(
-                        'id_kategori_proses' => $id_kategori_proses
-                    );
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Update',
@@ -131,7 +128,6 @@ class KategoriProses extends RestController {
     public function index_get($slug='')
     {
         if(@$slug){
-            // $val = $this->input->get('val');
             $get = $this->kategori_proses_show(['slug' => $slug]);
             $data = $get->row_array();
         }else{

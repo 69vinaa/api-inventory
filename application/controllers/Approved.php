@@ -120,8 +120,10 @@ class Approved extends RestController
                     if ($get->num_rows() > 0) {
                         $rows = $get->result_array();
                         foreach ($rows as $row) {
-                        $this->detail_barang->update(['id_detail_barang' => $row['id_detail_barang']], ['id_status' => 1]); //agar saat approved status barang langsung berubah
+                        //agar saat approved status barang langsung berubah
+                        $this->detail_barang->update(['id_detail_barang' => $row['id_detail_barang']], ['id_status' => 1]);
                         $this->detail_barang_proses->update(['id_barang_proses' => $row['id_barang_proses']], ['id_status' => 1]);
+                        $this->detail_barang->sumStok;
                         }
                     }
                 }

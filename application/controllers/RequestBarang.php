@@ -129,19 +129,6 @@ class RequestBarang extends RestController
                     $this->detailrequest($get->id_request, $jsonArray['item']);
                     $this->approved($get->id_request);
 
-
-                    // if ($status_approved == 1) {
-                    //     $this->response([
-                    //         'status' => TRUE,
-                    //         'message' => 'Item Request Approved'
-                    //     ]);
-                    // }else {
-                    //     $this->response([
-                    //         'status' => FALSE,
-                    //         'message' => 'Item Request Rejected'
-                    //     ]);
-                    // }
-
                     $this->response([
                         'status' => TRUE,
                         'title' => 'Successful Created',
@@ -161,8 +148,7 @@ class RequestBarang extends RestController
 
                 $arr['kode_request'] = str_replace(' ', '-', strtolower($jsonArray['kode']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->request->update($id, $arr);
-
+                $upd = $this->request_barang->update($id, $arr);
                 if ($upd) {
                     $this->response([
                         'status' => TRUE,
@@ -254,7 +240,7 @@ class RequestBarang extends RestController
         }
     }
 
-    public function detail_post($id_detail_request)
+    public function detail_post($id_detail_request='')
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
@@ -290,8 +276,8 @@ class RequestBarang extends RestController
                 }
             }
             if (!$id_detail_request) {
-                $iddr = ['id_detail_request' => $jsonArray['id_detail_request']];
-                $get = $this->request->show($iddr)->row();
+                $iddr = ['kode_request' => $jsonArray['kode']];
+                $get = $this->request_barang->show($iddr)->row();
                 $ins = $this->detailrequest($get->id_request, $jsonArray['item']);
 
                 if ($ins) {
@@ -310,7 +296,7 @@ class RequestBarang extends RestController
             }else {
                 $id = ['id_detail_request' => $id_detail_request];
                 $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->detail_request->update($id, $arr);
+                $upd = $this->detail_request_barang->update($id, $arr);
 
                 if ($upd) {
                     $this->response([
@@ -357,12 +343,12 @@ class RequestBarang extends RestController
     {
         if (@$id_detail_request) {
             $iddr = ['id_detail_request' => $id_detail_request];
-            $get = $this->detail_request->show($iddr);
+            $get = $this->detail_request_barang->show($iddr);
 
             if ($get->num_rows() == 1) {
                 $data = $get->row_array();
                 $id = ['id_detail_request' => $data['id_detail_request']];
-                $del = $this->detail_request->delete($id);
+                $del = $this->detail_request_barang->delete($id);
                 if ($del) {
                     $this->response([
                         'status' => TRUE,
@@ -446,16 +432,5 @@ class RequestBarang extends RestController
             ], RestController::HTTP_OK);
         }
     }
-        
-
-// biar statusnya jadi 1
-    // public function status($id_request, $approved_id)
-    // {
-    //     if ($this->approved->updateStatus($approved_id)) {
-    //         return true;
-    //     }else {
-    //         return false;
-    //     }
-    // }
 }
 ?>

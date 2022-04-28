@@ -272,6 +272,8 @@ class Barang extends RestController {
             $data = $get->row_array();
             $detail = $this->detail_barang->show(['id_barang' => $data['id_barang']])->result_array();
             $data['barang'] = $detail;
+            //untuk menampilkan overall_stok sesuai slug yg dipanggil
+            $data['overall_stok'] = $this->detail_barang->sumStok(['id_barang' => $data['id_barang']])->row()->stok;
         }else{
             $get = $this->barang->show(); //nama model(alias)->nama function yg di model
             $barang = $get->result_array();
@@ -297,7 +299,7 @@ class Barang extends RestController {
             ], RestController::HTTP_NOT_FOUND);
         }
 
-        if (@$this->barang['overall_stok'] <= 5) {
+        if ($data['overall_stok'] < 5) {
             $data = $this->barang['overall_stok']->fetch_assoc();
             if ($data) {
                 $this->response([

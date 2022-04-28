@@ -194,7 +194,6 @@ class BarangProses extends RestController
     public function index_get($slug='')
     {
         if (@$slug) {
-            // $val = $this->input->get('val');
             $get = $this->barang_proses->show(['slug' => $slug]);
             $data = $get->row_array();
             $detail = $this->detail_barang_proses->show(['id_barang_proses' => $data['id_barang_proses']])->result_array();
@@ -266,12 +265,12 @@ class BarangProses extends RestController
         }
     }
 
-    public function detail_post($slug='')
+    public function detail_post($id_detail_barang_proses='')
     {
         $jsonArray = json_decode($this->input->raw_input_stream, true);
         $postReal = $this->form_validation->set_data($jsonArray);
 
-        if (!$slug) {
+        if (!$id_detail_barang_proses) {
             $this->form_validation->set_rules('slug', 'Slug', 'trim|required', [
                 'required' => '%s Required'
             ]);
@@ -280,33 +279,30 @@ class BarangProses extends RestController
             ]);
         }
 
-        if ($this->form_validation->run() == FALSE && !$slug) {
+        if ($this->form_validation->run() == FALSE && !$id_detail_barang_proses) {
             $this->response([
                 'status' => FALSE,
                 'title' => 'Invalid input required',
                 'message' => validation_errors()
             ], RestController::HTTP_BAD_REQUEST);
         }else {
-            if (@$slug) {
-                if (@$slug && @$jsonArray['barang_proses']) {
+            if (@$id_detail_barang_proses) {
+                if (@$id_detail_barang_proses && @$jsonArray['barang_proses']) {
                     $arr['id_barang_proses'] = $jsonArray['barang_proses'];
                 }
-                if (@$slug && @$jsonArray['detail_barang']) {
+                if (@$id_detail_barang_proses && @$jsonArray['detail_barang']) {
                     $arr['id_detail_barang'] = $jsonArray['detail_barang'];
                 }
-                if (@$slug && @$jsonArray['status']) {
+                if (@$id_detail_barang_proses && @$jsonArray['status']) {
                     $arr['id_status'] = $jsonArray['status'];
                 }
-                if (@$slug && @$jsonArray['type']) {
-                    $arr['id_type'] = $jsonArray['type'];
-                }
-                if (@$slug && @$jsonArray['jml']) {
+                if (@$id_detail_barang_proses && @$jsonArray['jml']) {
                     $arr['jml_barang'] = $jsonArray['jml'];
                 }
             }
-            if (!$slug) {
-                $idslug = ['slug' => $jsonArray['slug']];
-                $get = $this->barang_proses->show($idslug)->row();
+            if (!$id_detail_barang_proses) {
+                $iddbp = ['id_detail_barang_proses' => $id_detail_barang_proses];
+                $get = $this->barang_proses->show($iddbp)->row();
                 $ins = $this->detailbarang($get->id_barang_proses, $jsonArray['item']);
                 
                 if ($ins) {
@@ -323,7 +319,7 @@ class BarangProses extends RestController
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else {
-                $id = ['slug' => $slug];
+                $id = ['id_detail_barang_proses' => $id_detail_barang_proses];
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->detail_barang_proses->update($id, $arr);
 
@@ -347,7 +343,6 @@ class BarangProses extends RestController
     public function detail_get($slug='')
     {
         if (@$slug) {
-            // $val = $this->input->get('val');
             $get = $this->detail_barang_proses->show(['slug' => $slug]);
             $data = $get->row_array();
         }else {
@@ -369,11 +364,11 @@ class BarangProses extends RestController
         }
     }
 
-    public function detail_delete($slug)
+    public function detail_delete($id_detail_barang_proses)
     {
-        if (@$slug) {
-            $idslug = ['slug' => $slug];
-            $get = $this->detail_barang_proses->show($idslug);
+        if (@$id_detail_barang_proses) {
+            $iddbp = ['id_detail_barang_proses' => $id_detail_barang_proses];
+            $get = $this->detail_barang_proses->show($iddbp);
 
             if ($get->num_rows() == 1) {
                 $data = $get->row_array();
@@ -416,7 +411,6 @@ class BarangProses extends RestController
                     'id_barang_proses' => $id_barang_proses,
                     'id_detail_barang' => $item['detail_barang'],
                     'id_status' => $item['status'],
-                    'id_type' => $item['type'],
                     'jml_barang' => $item['jml']
                 ];
 

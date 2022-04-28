@@ -30,6 +30,11 @@ class MApproved extends CI_Model
         return(($this->db->affected_rows() > 0) ? true : false);
     }
 
+    public function sumStok()
+    {
+        # code...
+    }
+
     public function showMax($where='')
     {
         $this->db->select_max('ordered');
@@ -38,14 +43,5 @@ class MApproved extends CI_Model
         }
         return $this->db->get($this->tbl);
     }
-
-//biar statusnya jadi 1
-    // public function updateStatus($approved_id)
-    // {
-    //     $this->db->set('status_approved', 1, FALSE);
-    //     $where = array('id_approved_history' => $approved_id);
-    //     $this->db->where($where);
-    //     $this->db->update('inv_approved_history');
-    // }
 }
 ?>

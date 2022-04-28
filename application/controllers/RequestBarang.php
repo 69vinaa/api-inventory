@@ -293,9 +293,7 @@ class RequestBarang extends RestController
                     ], RestController::HTTP_BAD_REQUEST);
                 }
             }else {
-                $id = ['id_detail_request' => $id_detail_request];
-                $arr['update_at'] = date('Y-m-d H:i:s');
-                $upd = $this->detail_request_barang->update($id, $arr);
+                $upd = $this->detailrequest($id_detail_request, $jsonArray['item'], 'update');
 
                 if ($upd) {
                     $this->response([
@@ -377,19 +375,24 @@ class RequestBarang extends RestController
         }
     }
 
-    private function detailrequest($id_request, $items)
+    private function detailrequest($id_request, $items, $type='insert')
     {
         if (@$items) {
             foreach ($items as $item) {
                 $arr = [
-                    'id_request' => $id_request,
                     'id_barang' => $item['barang'],
                     'jml_barang' => $item['jml'],
                     'keterangan' => $item['ket']
                 ];
-
-                $arr['create_at'] = date('Y-m-d H:i:s');
-                $this->detail_request_barang->insert($arr);
+                if ($type == 'insert') {
+                    $arr['id_request'] = $id_request;
+                    $arr['create_at'] = date('Y-m-d H:i:s');
+                    $this->detail_request_barang->insert($arr);
+                }else {
+                    $arr['update_at'] = date('Y-m-d H:i:s');
+                    $this->detail_request_barang->update(['id_detail_request'=> $id_request], $arr);
+                }
+            
             }
             return true;
         }else {

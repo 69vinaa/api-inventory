@@ -36,5 +36,12 @@ class MDetailBarangProses extends CI_Model
         $this->db->delete($this->detail_barang_proses);
         return(($this->db->affested_rows() > 0) ? true : false);
     }
+
+    public function newStok($where)
+    {
+        $this->db->select_sum('jml_barang');
+        $this->db->where($where);
+        return $this->db->get($this->v_detail_barang_proses);
+    }
 }
 ?>

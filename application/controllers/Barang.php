@@ -30,6 +30,7 @@ class Barang extends RestController {
 
         $this->load->model('MBarang', 'barang');
         $this->load->model('MDetailBarang', 'detail_barang');
+        $this->load->model('MDetailBarangProses', 'detail_barang_proses');
         $this->load->model('MToken', 'token');
     }
 
@@ -308,14 +309,6 @@ class Barang extends RestController {
                 ], RestController::HTTP_OK);
             }
         }
-        // $slug = $koneksi->query("SELECT * FROM inv_barang WHERE overall_stok <= '5'");
-        // $data = $slug->fetch_assoc();
-        // if ($data) {
-        //     $this->response([
-        //         'status' => TRUE,
-        //         'message' => 'Stok barang' .$jsonArray['nama']. 'kurang dari 5'
-        //     ], RestController::HTTP_OK);
-        // }
     }
 
 	public function index_delete($slug)
@@ -518,7 +511,11 @@ class Barang extends RestController {
                     $this->detail_barang->insert($arr);
                 }else {
                     $arr['update_at'] = date('Y-m-d H:i:s');
-                    $this->detail_barang->update(['serial_number'=> $arr['serial_number'], 'id_barang' => $id_barang], $arr);
+                    $this->detail_barang->update(
+        [
+            'serial_number'=> $arr['serial_number'],
+            'id_barang' => $id_barang
+        ], $arr);
                 }
             }
             return true;

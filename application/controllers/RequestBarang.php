@@ -146,7 +146,6 @@ class RequestBarang extends RestController
                 $row = $this->request_barang->show($kode)->row_array();
                 $id = ['id_request' => $row['id_request']];
 
-                $arr['kode_request'] = str_replace(' ', '-', strtolower($jsonArray['kode']));
                 $arr['update_at'] = date('Y-m-d H:i:s');
                 $upd = $this->request_barang->update($id, $arr);
                 if ($upd) {

@@ -48,5 +48,10 @@ class MDetailBarang extends CI_Model
         return $this->db->get($this->v_detail_barang); 
     }
 
+    public function update_stok_out($where)
+    {
+        $this->db->select_sum('stok') ;
+    }
+
 }
 ?>

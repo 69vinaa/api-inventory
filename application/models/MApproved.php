@@ -30,11 +30,6 @@ class MApproved extends CI_Model
         return(($this->db->affected_rows() > 0) ? true : false);
     }
 
-    public function sumStok()
-    {
-        # code...
-    }
-
     public function showMax($where='')
     {
         $this->db->select_max('ordered');
